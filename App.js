@@ -9,13 +9,14 @@
 
 
 // Imports
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { Text, View, TouchableOpacity, Image } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useFonts } from 'expo-font';
 import { LinearGradient } from 'expo-linear-gradient';
 import { style, wxicons } from './style';
+import metarparser from './js/metarparser.js';
 
 // Components for main screen
 import Sidebar from './components/sidebar.js';
@@ -31,8 +32,32 @@ export default function App() {
     WxIcons: require('./assets/fonts/weathericons.ttf'),
   });
 
-  // Load components
+  // Load components and variables
   const [open, setOpen] = useState(false);
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch and parse
+  useEffect(() => {
+    fetch('', { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36" })
+      .then((response) => response.json())
+      .then((json) => {
+        setData(metarparser(json.features, "New York, NY"));
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error(error);
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
 
   // Wait for fonts to load
   if (!fontsLoaded) return null;

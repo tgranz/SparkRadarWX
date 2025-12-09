@@ -60,6 +60,7 @@ function style() {
     });
 }
 
+// https://erikflowers.github.io/weather-icons/
 function wxicons(id) {
     // Charactes are strange and appear ambiguous.
     // This function maps icon IDs to characters.
