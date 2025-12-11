@@ -75,10 +75,29 @@ function wxicons(id) {
         "night-clear": '',
         "day-cloudy": '',
         "night-cloudy": '',
+        "day-partlycloudy": '',
+        "night-partlycloudy": '',
+        "day-rain": '',
+        "night-rain": '',
+        "day-thunderstorm": '',
+        "night-thunderstorm": '',
+        "day-snow": '',
+        "night-snow": '',
     }[id];
 }
 
+const getIconColor = (icon) => {
+    icon = icon.toLowerCase();
+    if (icon.includes('partly')) return '#af8101ff';
+    if (icon.includes('clear')) return '#ffaa00';
+    if (icon.includes('cloudy') || icon.includes('overcast')) return '#888888';
+    if (icon.includes('rain')) return '#2a7fff';
+    if (icon.includes('thunderstorm')) return '#333333';
+    if (icon.includes('clear')) return '#8400ff';
+    return '#ffaa00';
+};
+
 // Exports
 module.exports = {
-    style, wxicons
+    style, wxicons, getIconColor
 };

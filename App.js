@@ -9,18 +9,19 @@
 
 
 // Imports
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { Text, View, TouchableOpacity, Image } from 'react-native';
+import { Text, View, TouchableOpacity, Image, Animated } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useFonts } from 'expo-font';
 import { LinearGradient } from 'expo-linear-gradient';
-import { style, wxicons } from './style';
+import { style, wxicons, getIconColor } from './style';
 import metarparser from './js/metarparser.js';
 
 // Components for main screen
 import Sidebar from './components/sidebar.js';
 import LocationPicker from './components/locationpicker.js';
+import HourlyScreen from './components/hourly.js';
 
 // Styles
 const styles = style();
@@ -28,26 +29,21 @@ const styles = style();
 function getDataFromCondition(condition) {
   var id = 'sunny';
   var time = "day";
-  var color = "#ffaa00";
   var newCondition = condition.toLowerCase();
 
   if (condition.toLowerCase().includes("overcast")) {
     id = "cloudy";
-    color = "#888888";
     newCondition = "Overcast";
   } else if (condition.toLowerCase().includes("cloud")) {
     id = "cloudy";
-    color = "#888888";
     newCondition = "Cloudy";
   } else if (condition.toLowerCase().includes("clear") || condition.toLowerCase().includes("sunny")) {
     id = "clear";
-    color = "#ffaa00";
     newCondition = "Clear";
   }
 
   return {
     icon: wxicons(time + '-' + id),
-    color: color,
     condition: newCondition
   };
 }
@@ -63,8 +59,10 @@ export default function App() {
   // Load components and variables
   const [open, setOpen] = useState(false);
   const [locationOpen, setLocationOpen] = useState(false);
+  const [currentScreen, setCurrentScreen] = useState('home');
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const fadeAnim = useRef(new Animated.Value(1)).current;
 
   // Fetch and parse
   useEffect(() => {
@@ -79,6 +77,30 @@ export default function App() {
         setLoading(false);
       });
   }, []);
+
+  // Animate screen transitions
+  useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  }, [currentScreen]);
+
+  const navigateToScreen = (screen) => {
+    if (screen === currentScreen) {
+      setOpen(false);
+      return;
+    }
+    Animated.timing(fadeAnim, {
+      toValue: 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start(() => {
+      setCurrentScreen(screen);
+      setOpen(false);
+    });
+  };
 
   // Alert elements
   var alertelements = (
@@ -107,9 +129,22 @@ export default function App() {
   // Wait for fonts to load
   if (!fontsLoaded) return null;
 
+  // Show hourly screen if selected
+  if (currentScreen === 'hourly') {
+    return (
+      <View style={{ flex: 1 }}>
+        <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
+          <HourlyScreen onMenuOpen={() => setOpen(true)} data={data} />
+        </Animated.View>
+        { open && <Sidebar onClose={() => setOpen(false)} onNavigate={navigateToScreen} /> }
+      </View>
+    );
+  }
+
   return (
-    <>
-      <LinearGradient colors={['#27BEFF', '#2A7FFF']} style={[styles.gradientBackground, { zIndex: 1 }]} >
+    <View style={{ flex: 1 }}>
+      <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
+        <LinearGradient colors={['#27BEFF', '#2A7FFF']} style={[styles.gradientBackground, { zIndex: 1 }]} >
 
         <StatusBar style="auto" />
         <View style={[styles.headerContainer, (open || locationOpen) && { pointerEvents: 'none' }]}>
@@ -135,7 +170,7 @@ export default function App() {
 
 
         <View style={[styles.cardContainer, (open || locationOpen) && { pointerEvents: 'none' }, { marginTop: 20, paddingHorizontal: 60, flexDirection: 'row', alignItems: 'center' }]}>
-          <Text style={[styles.wxicons, { color: getDataFromCondition(data.WEATHER).color }]}>{ getDataFromCondition(data.WEATHER).icon}</Text>
+          <Text style={[styles.wxicons, { color: getIconColor(data.WEATHER) }]}>{ getDataFromCondition(data.WEATHER).icon}</Text>
           <View style={{ marginLeft: 10 }}>
             <Text style={styles.header}>{getDataFromCondition(data.WEATHER).condition}</Text>
             <Text style={[styles.header, { fontSize: 28 }]}>{Math.round(data.TEMP)}°</Text>
@@ -145,7 +180,7 @@ export default function App() {
         {alertelements}
 
         <View style={[styles.cardContainer, (open || locationOpen) && { pointerEvents: 'none' }]}>
-          <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-between' }}>
+          <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-around' }}>
             <View style={{ gap: 15 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <MaterialIcons name="opacity" size={24} color="#2a7fff" />
@@ -181,10 +216,11 @@ export default function App() {
           </View>
         </View>
 
-      </LinearGradient>
+        </LinearGradient>
+      </Animated.View>
 
-      { open && <Sidebar onClose={() => setOpen(false)} /> }
+      { open && <Sidebar onClose={() => setOpen(false)} onNavigate={navigateToScreen} /> }
       { locationOpen && <LocationPicker onClose={() => setLocationOpen(false)} /> }
-    </>
+    </View>
   );
 }

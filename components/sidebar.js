@@ -4,7 +4,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 const { width } = Dimensions.get('window');
 
-export default function Sidebar({ onClose }) {
+export default function Sidebar({ onClose, onNavigate }) {
     const slideAnim = useRef(new Animated.Value(-width * 0.7)).current;
     const fadeAnim = useRef(new Animated.Value(0)).current;
 
@@ -57,11 +57,11 @@ export default function Sidebar({ onClose }) {
                         </TouchableOpacity>
                     </View>
 
-                    <TouchableOpacity style={styles.item}>
+                    <TouchableOpacity style={styles.item} onPress={() => { onNavigate('home'); }}>
                         <MaterialIcons style={styles.sideIcon} name="home" size={30} color="black" />
                         <Text style={styles.itemText}>Home</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.item}>
+                    <TouchableOpacity style={styles.item} onPress={() => { onNavigate('hourly'); }}>
                         <MaterialIcons style={styles.sideIcon} name="timer" size={30} color="black" />
                         <Text style={styles.itemText}>Hourly</Text>
                     </TouchableOpacity>
