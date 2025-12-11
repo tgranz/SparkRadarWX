@@ -48,7 +48,7 @@ Follow "Test", then...
 }
 
 ```
-5) Run `eas build --profile preview --platform android`.
+5) Run `eas build --profile preview --platform android`. (Build may take a while as it is built on the EAS public server, not your local machine.)
 6) If asked to create an EAS project, enter `y`.
 7) If asked to generate an android keystore, enter `y`.
 8) EAS will compile an `apk` file of the app. You can now install it to your device.
