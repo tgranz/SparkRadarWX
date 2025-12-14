@@ -78,18 +78,13 @@ export default function HourlyScreen({ onMenuOpen, data }) {
 const localStyles = StyleSheet.create({
     hourCard: {
         backgroundColor: 'rgba(255, 255, 255, 0.9)',
-        borderRadius: 15,
+        borderRadius: 20,
         padding: 15,
         marginHorizontal: 20,
         marginBottom: 10,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 3,
     },
     timeSection: {
         flex: 1,

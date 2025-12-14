@@ -5,3 +5,6 @@ colorpallatte.png
 notepad.txt
 .expo/
 android/
+
+# Environment variables
+apikey.js

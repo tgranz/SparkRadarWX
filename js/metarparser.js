@@ -1,6 +1,6 @@
-// Simple METAR parser for weather data
+const {OPENWEATHER_API_KEY} = require('./apikey.js');
 
-function metarparser(data, lat, lon) {
+function metarparser(data, lat, lon, callback) {
     var output = {};
 
     // Calculate distances
@@ -34,6 +34,77 @@ function metarparser(data, lat, lon) {
             }
         } catch {}
     }    
+
+    // If bad data, try another METAR
+    if (output.properties.WEATHER) {
+        try {
+            if (output.properties.WEATHER.toLowerCase().includes("automated observation")) throw new Error;
+            console.log("First METAR data valid.");
+        } catch {
+            // Delete bad data
+            console.log("Bad data from nearest METAR", output.properties.STATION + ". Trying another...")
+            data.splice(data.indexOf(output), 1);
+
+            // Try another METAR
+            for (let i = 0; i < data.length; i++) {
+                try {
+                    if (data[i].DISTANCE < output.DISTANCE || !output.DISTANCE) {
+                        output = data[i];
+                    }
+                } catch { }
+            }
+        }
+    }
+
+    // If distance is too large, or data is still bad, return openWeatherMap data
+    if (output.DISTANCE > 15
+        || output.properties.WEATHER.toLowerCase().includes("automated observation")
+    ) {
+
+        console.log("Bad data from second nearest METAR", output.properties.STATION + ". Trying OpenWeatherMap...");
+        if (OPENWEATHER_API_KEY) { // Remove negation to enable OWM fetch, this is used to prevent exceeding rate limit
+            fetch(`https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&appid=${OPENWEATHER_API_KEY}&units=imperial`)
+                .then((response) => response.json())
+                .then((json) => {
+                    const owmData = {
+                        STATION_NAME: null,
+                        ICAO: "",
+                        WEATHER: json.current.weather[0].description,
+                        TEMP: json.current.temp,
+                        DEW_POINT: json.current.dew_point,
+                        WIND_DIRECT: json.current.wind_deg,
+                        WIND_SPEED: json.current.wind_speed,
+                        PRESSURE: json.current.pressure,
+                        R_HUMIDITY: json.current.humidity,
+                        VISIBILITY: json.current.visibility,
+                        SKY_CONDTN: json.current.weather[0].main,
+                    };
+                    console.log("OpenWeatherMap data succeeded");
+                    if (callback) {
+                        callback(owmData);
+                    }
+                })
+                .catch((error) => {
+                    console.error("Error fetching OpenWeatherMap data:", error);
+                });
+            // Return placeholder while fetching
+            return {
+                STATION_NAME: "Loading...",
+                ICAO: "...",
+                WEATHER: "Fetching data...",
+                TEMP: 0,
+                DEW_POINT: 0,
+                WIND_DIRECT: 0,
+                WIND_SPEED: 0,
+                PRESSURE: 0,
+                R_HUMIDITY: 0,
+                VISIBILITY: 0,
+                SKY_CONDTN: "Loading"
+            };
+        } else {
+            console.warn("OpenWeatherMap API key not configured");
+        }
+    }
 
     // Formatting
     output.properties.WEATHER = output.properties.WEATHER == "No significant weather present at this time." ? 

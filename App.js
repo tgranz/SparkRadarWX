@@ -18,6 +18,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { style, wxicons, getIconColor } from './style';
 import metarparser from './js/metarparser.js';
 
+
 // Components for main screen
 import Sidebar from './components/sidebar.js';
 import LocationPicker from './components/locationpicker.js';
@@ -40,6 +41,21 @@ function getDataFromCondition(condition) {
   } else if (condition.toLowerCase().includes("clear") || condition.toLowerCase().includes("sunny")) {
     id = "clear";
     newCondition = "Clear";
+  } else if (condition.toLowerCase().includes("light") && condition.toLowerCase().includes("snow")) {
+    id = "snow";
+    newCondition = "Light snow";
+  } else if (condition.toLowerCase().includes("heavy") && condition.toLowerCase().includes("snow")) {
+    id = "snow";
+    newCondition = "Heavy snow";
+  } else if (condition.toLowerCase().includes("snow")) {
+    id = "heavysnow";
+    newCondition = "Snow";
+  } else if (condition.toLowerCase().includes("haze")) {
+    id = "haze";
+    newCondition = "Haze";
+  } else if (condition.toLowerCase().includes("fog")) {
+    id = "fog";
+    newCondition = "Fog";
   }
 
   return {
@@ -62,21 +78,33 @@ export default function App() {
   const [currentScreen, setCurrentScreen] = useState('home');
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [coordinates, setCoordinates] = useState({ lat: 40.97959, lon: -85.17173 });
   const fadeAnim = useRef(new Animated.Value(1)).current;
+  const [locationName, setLocationName] = useState("Current Location");
 
   // Fetch and parse
-  useEffect(() => {
+  const loadCurrentConditions = (lat, lon) => {
+    setLoading(true);
     fetch('https://services9.arcgis.com/RHVPKKiFTONKtxq3/arcgis/rest/services/NOAA_METAR_current_wind_speed_direction_v1/FeatureServer/0/query?where=1=1&outFields=*&f=geojson', { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36" })
       .then((response) => response.json())
       .then((json) => {
-        setData(metarparser(json.features, 40.979596303057065, -85.17173642523534));
+        const parsedData = metarparser(json.features, lat, lon, (owmData) => {
+          // Callback: Update data when OpenWeatherMap fetch completes
+          setData(owmData);
+          setLoading(false);
+        });
+        setData(parsedData);
         setLoading(false);
       })
       .catch((error) => {
         console.error(error);
         setLoading(false);
       });
-  }, []);
+  };
+
+  useEffect(() => {
+    loadCurrentConditions(coordinates.lat, coordinates.lon);
+  }, [coordinates]);
 
   // Animate screen transitions
   useEffect(() => {
@@ -102,26 +130,63 @@ export default function App() {
     });
   };
 
+  const spinValue = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.timing(spinValue, {
+        toValue: 1,
+        duration: 1000,
+        useNativeDriver: true,
+      })
+    ).start();
+  }, []);
+
+  const spin = spinValue.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: ['0deg', '180deg', '360deg'],
+  });
+
   // Alert elements
-  var alertelements = (
+  /*var alertelements = [
+    (
     <TouchableOpacity>
-      <View style={[styles.cardContainer, open && { pointerEvents: 'none' }, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' } ]}>
+        <View style={[styles.cardContainer, open && { pointerEvents: 'none' }, { flexDirection: 'row', alignItems: 'center', backgroundColor:"#ff2121", justifyContent: 'space-between' } ]}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-          <MaterialIcons name="warning" size={32} color="#ff2121" style={{ marginLeft: 0 }} />
+          <MaterialIcons name="warning" size={32} color="#ffffff" style={{ marginLeft: 0 }} />
           <View style={{ marginLeft: 10 }}>
-            <Text style={[styles.header, { fontSize: 16, textAlign: 'right' }]}>Severe Thunderstorm Warning</Text>
-            <Text style={[styles.text, { textAlign: 'right' }]}>In effect until 6:30PM 12/30</Text>
+            <Text style={[styles.header, { fontSize: 16, color: "#ffffff", textAlign: 'right' }]}>Severe Thunderstorm Warning</Text>
+            <Text style={[styles.text, { color: "#ffffff", textAlign: 'right' }]}>In effect until 6:30PM 12/30</Text>
           </View>
         </View>
       </View>
     </TouchableOpacity>
-  );
+    ),
+    (
+      <TouchableOpacity>
+        <View style={[styles.cardContainer, open && { pointerEvents: 'none' }, { flexDirection: 'row', backgroundColor:"#ffcc00", alignItems: 'center', justifyContent: 'space-between' }]}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+            <MaterialIcons name="warning" size={32} color="#000000" style={{ marginLeft: 0 }} />
+            <View style={{ marginLeft: 10 }}>
+              <Text style={[styles.header, { fontSize: 16, textAlign: 'right' }]}>Severe Thunderstorm Watch</Text>
+              <Text style={[styles.text, { textAlign: 'right' }]}>In effect until 9:00PM 12/30</Text>
+            </View>
+          </View>
+        </View>
+      </TouchableOpacity>
+    )
+  ];*/
+  
+  var alertelements = [];
   
 
   if (loading) {
     return (
-      <View style={styles.container}>
-        <Text>Loading...</Text>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <Animated.Image 
+        source={require('./assets/spinner.png')} 
+        style={{ width: 75, height: 75, transform: [{ rotate: spin }] }} 
+      />
       </View>
     );
   }
@@ -149,14 +214,14 @@ export default function App() {
         <StatusBar style="auto" />
         <View style={[styles.headerContainer, (open || locationOpen) && { pointerEvents: 'none' }]}>
           <View style={styles.side}>
-            <TouchableOpacity onPress={() => setOpen(true)}>
+              <TouchableOpacity onPress={() => { setOpen(true) }}>
               <MaterialIcons name="menu" size={35} color="black" />
             </TouchableOpacity>
           </View>
 
           <TouchableOpacity style={styles.titleContainer} onPress={() => setLocationOpen(true)}>
             <View style={styles.titleContainer}>
-              <Text style={styles.header}>{data.STATION_NAME}</Text>
+              <Text style={styles.header}>{ data.STATION_NAME ? data.STATION_NAME : locationName }</Text>
               <Text style={styles.text}>{data.ICAO}</Text>
             </View>
           </TouchableOpacity>
@@ -172,12 +237,14 @@ export default function App() {
         <View style={[styles.cardContainer, (open || locationOpen) && { pointerEvents: 'none' }, { marginTop: 20, paddingHorizontal: 60, flexDirection: 'row', alignItems: 'center' }]}>
           <Text style={[styles.wxicons, { color: getIconColor(data.WEATHER) }]}>{ getDataFromCondition(data.WEATHER).icon}</Text>
           <View style={{ marginLeft: 10 }}>
-            <Text style={styles.header}>{getDataFromCondition(data.WEATHER).condition}</Text>
+              <Text style={styles.header}>{getDataFromCondition(data.WEATHER).condition.charAt(0).toUpperCase() + getDataFromCondition(data.WEATHER).condition.slice(1)}</Text>
             <Text style={[styles.header, { fontSize: 28 }]}>{Math.round(data.TEMP)}°</Text>
           </View>
         </View>
 
-        {alertelements}
+        {alertelements.map((element, index) => (
+          <React.Fragment key={index}>{element}</React.Fragment>
+        ))}
 
         <View style={[styles.cardContainer, (open || locationOpen) && { pointerEvents: 'none' }]}>
           <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-around' }}>
@@ -220,7 +287,14 @@ export default function App() {
       </Animated.View>
 
       { open && <Sidebar onClose={() => setOpen(false)} onNavigate={navigateToScreen} /> }
-      { locationOpen && <LocationPicker onClose={() => setLocationOpen(false)} /> }
+      {locationOpen && <LocationPicker
+        onClose={() => setLocationOpen(false)}
+        onLocationSelect={(lat, lon, name) => {
+          setCoordinates({ lat, lon });
+          setLocationOpen(false);
+          setLocationName(name.split(",")[0]);
+        }}
+      />}
     </View>
   );
 }

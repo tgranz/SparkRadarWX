@@ -16,8 +16,14 @@ Get it from the releases section on the right side of this README or at the bott
 1) Clone or download the source code.
 2) Download the Expo Go app from the Play Store or App Store.
 3) Install dependencies with `npm install`.
-4) Start the development server with `npx expo start`.
-5) In Expo Go, find the QR scanner and scan the QR code in the terminal. The app should compile and be running on your device.
+4) Add a `env.js` file and add:
+```js
+module.exports = {
+  OPENWEATHER_API_KEY: "your_api_key_here"
+};
+```
+5) Start the development server with `npx expo start`.
+6) In Expo Go, find the QR scanner and scan the QR code in the terminal. The app should compile and be running on your device.
 
 # Build (Android)
 Follow "Test", then...
@@ -52,3 +58,6 @@ Follow "Test", then...
 6) If asked to create an EAS project, enter `y`.
 7) If asked to generate an android keystore, enter `y`.
 8) EAS will compile an `apk` file of the app. You can now install it to your device.
+
+# Will we see an iOS app?
+**No.** I do not wish to pay $100 a year to put the app on the App Store. I also do not own an iPhone to perform native testing. If you are up to it, however, feel free to for the code and build an iOS version!

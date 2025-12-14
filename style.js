@@ -52,7 +52,6 @@ function style() {
             shadowOffset: { width: 0, height: 2 },
             shadowOpacity: 0.15,
             shadowRadius: 4,
-            elevation: 3,
         },
         wxicons: {
             fontFamily: 'WxIcons',
@@ -68,10 +67,12 @@ function style() {
 
 // https://erikflowers.github.io/weather-icons/
 function wxicons(id) {
+    id = id.toString().toLowerCase();
     // Charactes are strange and appear ambiguous.
     // This function maps icon IDs to characters.
     return {
         "day-clear": '',
+        "day-sunny": '',
         "night-clear": '',
         "day-cloudy": '',
         "night-cloudy": '',
@@ -81,17 +82,24 @@ function wxicons(id) {
         "night-rain": '',
         "day-thunderstorm": '',
         "night-thunderstorm": '',
-        "day-snow": '',
-        "night-snow": '',
+        "day-snow": '',
+        "night-snow": '',
+        'day-heavysnow': '',
+        'night-heavysnow': '',
+        'day-haze': '',
+        'night-haze': '',
+        'night-fog': '',
+        'day-fog': '',
+        '': '',
     }[id];
 }
 
-const getIconColor = (icon) => {
+function getIconColor (icon) {
     icon = icon.toLowerCase();
     if (icon.includes('partly')) return '#af8101ff';
     if (icon.includes('clear')) return '#ffaa00';
-    if (icon.includes('cloudy') || icon.includes('overcast')) return '#888888';
-    if (icon.includes('rain')) return '#2a7fff';
+    if (icon.includes('cloud') || icon.includes('overcast')) return '#888888';
+    if (icon.includes('rain') || icon.includes('snow')) return '#2a7fff';
     if (icon.includes('thunderstorm')) return '#333333';
     if (icon.includes('clear')) return '#8400ff';
     return '#ffaa00';

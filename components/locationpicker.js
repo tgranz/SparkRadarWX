@@ -1,12 +1,17 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions, Animated, TextInput, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions, Animated, TextInput, ScrollView, Alert } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
+import * as Location from 'expo-location';
 const { width, height } = Dimensions.get('window');
 
-export default function Sidebar({ onClose }) {
+export default function Sidebar({ onClose, onLocationSelect }) {
     const slideAnim = useRef(new Animated.Value(height)).current;
     const fadeAnim = useRef(new Animated.Value(0)).current;
+    const [searchQuery, setSearchQuery] = React.useState('');
+    const [searchResults, setSearchResults] = React.useState([]);
+    const [isSearching, setIsSearching] = React.useState(false);
+    const [gettingLocation, setGettingLocation] = React.useState(false);
 
     useEffect(() => {
         Animated.parallel([
@@ -38,6 +43,107 @@ export default function Sidebar({ onClose }) {
         ]).start(() => onClose());
     };
 
+    function locationSearch(queryString) {
+        if (!queryString.trim()) {
+            setSearchResults([]);
+            setIsSearching(false);
+            return;
+        }
+
+        setIsSearching(true);
+        fetch(`https://nominatim.openstreetmap.org/search?q=${queryString.replace(/ /g, '+')}&format=geojson&limit=10`, {
+            headers: {
+                'User-Agent': 'SparkRadarWX, https://github.com/tgranz/SparkRadarWX',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.features && data.features.length > 0) {
+                const results = data.features.map(feature => ({
+                    name: feature.properties.name,
+                    expanded_name: feature.properties.display_name,
+                    lat: feature.geometry.coordinates[1],
+                    lon: feature.geometry.coordinates[0],
+                    type: feature.properties.type || 'location'
+                }));
+                setSearchResults(results);
+            } else {
+                setSearchResults([]);
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching location data:', error);
+            setSearchResults([]);
+        });
+    }
+
+    const handleSearch = () => {
+        if (searchQuery.length > 0) {
+            locationSearch(searchQuery);
+        } else {
+            setSearchResults([]);
+            setIsSearching(false);
+        }
+    };
+    const handleLocationSelect = (location) => {
+        console.log('Selected location:', location);
+        if (onLocationSelect) {
+            onLocationSelect(location.lat, location.lon, location.name);
+        }
+        handleClose();
+    };
+
+    const handleCurrentLocation = async () => {
+        setGettingLocation(true);
+        try {
+            // Request permission
+            const { status } = await Location.requestForegroundPermissionsAsync();
+            
+            if (status !== 'granted') {
+                Alert.alert(
+                    'Permission Denied',
+                    'Location permission is required to use this feature. Please enable location services in your device settings.',
+                    [{ text: 'OK' }]
+                );
+                setGettingLocation(false);
+                return;
+            }
+
+            // Get current location
+            const location = await Location.getCurrentPositionAsync({
+                accuracy: Location.Accuracy.Balanced
+            });
+
+            const { latitude, longitude } = location.coords;
+
+            // Get address name from coordinates using reverse geocoding
+            const address = await Location.reverseGeocodeAsync({
+                latitude,
+                longitude
+            });
+
+            let locationName = 'Current Location';
+            if (address.length > 0) {
+                const { city, region, country } = address[0];
+                locationName = [city, region, country].filter(Boolean).join(', ');
+            }
+
+            if (onLocationSelect) {
+                onLocationSelect(latitude, longitude, locationName);
+            }
+            handleClose();
+        } catch (error) {
+            console.error('Error getting current location:', error);
+            Alert.alert(
+                'Location Error',
+                'Unable to get your current location. Please try again or search manually.',
+                [{ text: 'OK' }]
+            );
+        } finally {
+            setGettingLocation(false);
+        }
+    };
+
     return (
         <View style={styles.container}>
             <Animated.View style={[styles.backdrop, { opacity: fadeAnim }]}>
@@ -50,7 +156,7 @@ export default function Sidebar({ onClose }) {
 
             <Animated.View style={[styles.drawerContainer, { transform: [{ translateY: slideAnim }] }]}>
                 <View style={styles.drawer}>
-                    <View style={styles.handle} />
+                    {/*<View style={styles.handle} />*/}
                     
                     <View style={styles.header}>
                         <Text style={styles.title}>Select Location</Text>
@@ -65,66 +171,123 @@ export default function Sidebar({ onClose }) {
                             style={styles.searchInput}
                             placeholder="Search for a location..."
                             placeholderTextColor="#999"
+                            value={searchQuery}
+                            onChangeText={setSearchQuery}
+                            onSubmitEditing={handleSearch}
+                            returnKeyType="search"
+                            autoCapitalize="none"
+                            autoCorrect={false}
                         />
+                        {searchQuery.length > 0 && (
+                            <TouchableOpacity onPress={() => {
+                                setSearchQuery('');
+                                setSearchResults([]);
+                                setIsSearching(false);
+                            }}>
+                                <MaterialIcons name="clear" size={20} color="#666" />
+                            </TouchableOpacity>
+                        )}
                     </View>
 
                     <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-                        <View style={styles.section}>
-                            <Text style={styles.sectionTitle}>Favorites</Text>
+                        {isSearching && searchResults.length === 0 && searchQuery.length > 0 ? (
+                            <View style={styles.section}>
+                                <Text style={styles.sectionTitle}>Search Results</Text>
+                                <Text style={styles.noResults}>Searching...</Text>
+                            </View>
+                        ) : searchResults.length > 0 ? (
+                            <View style={styles.section}>
+                                <Text style={styles.sectionTitle}>Search Results</Text>
+                                {searchResults.map((result, index) => (
+                                    <TouchableOpacity 
+                                        key={index} 
+                                        style={styles.locationItem}
+                                        onPress={() => handleLocationSelect(result)}
+                                    >
+                                        <MaterialIcons name="location-on" size={24} color="#2A7FFF" style={styles.locationIcon} />
+                                        <View style={styles.locationInfo}>
+                                            <Text style={styles.locationName}>{result.name}</Text>
+                                            <Text style={styles.locationDetails}>
+                                                {result.expanded_name}
+                                            </Text>
+                                        </View>
+                                        <MaterialIcons name="chevron-right" size={24} color="#999" />
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+                        ) : searchQuery.length > 0 && !isSearching ? (
+                            <View style={styles.section}>
+                                <Text style={styles.sectionTitle}>Search Results</Text>
+                                <Text style={styles.noResults}>No locations found</Text>
+                            </View>
+                        ) : (
+                            <>
+                                <View style={styles.section}>
+                                    <Text style={styles.sectionTitle}>Favorites</Text>
                             
-                            <TouchableOpacity style={styles.locationItem}>
-                                <MaterialIcons name="location-on" size={24} color="#2A7FFF" style={styles.locationIcon} />
-                                <View style={styles.locationInfo}>
-                                    <Text style={styles.locationName}>New York, NY</Text>
-                                    <Text style={styles.locationDetails}>KJFK</Text>
-                                </View>
-                                <MaterialIcons name="star" size={24} color="#FFD700" />
-                            </TouchableOpacity>
+                                    <TouchableOpacity style={styles.locationItem}>
+                                        <MaterialIcons name="location-on" size={24} color="#2A7FFF" style={styles.locationIcon} />
+                                        <View style={styles.locationInfo}>
+                                            <Text style={styles.locationName}>New York, NY</Text>
+                                            <Text style={styles.locationDetails}>KJFK</Text>
+                                        </View>
+                                        <MaterialIcons name="star" size={24} color="#FFD700" />
+                                    </TouchableOpacity>
 
-                            <TouchableOpacity style={styles.locationItem}>
-                                <MaterialIcons name="location-on" size={24} color="#2A7FFF" style={styles.locationIcon} />
-                                <View style={styles.locationInfo}>
-                                    <Text style={styles.locationName}>Los Angeles, CA</Text>
-                                    <Text style={styles.locationDetails}>KLAX</Text>
-                                </View>
-                                <MaterialIcons name="star" size={24} color="#FFD700" />
-                            </TouchableOpacity>
+                                    <TouchableOpacity style={styles.locationItem}>
+                                        <MaterialIcons name="location-on" size={24} color="#2A7FFF" style={styles.locationIcon} />
+                                        <View style={styles.locationInfo}>
+                                            <Text style={styles.locationName}>Los Angeles, CA</Text>
+                                            <Text style={styles.locationDetails}>KLAX</Text>
+                                        </View>
+                                        <MaterialIcons name="star" size={24} color="#FFD700" />
+                                    </TouchableOpacity>
 
-                            <TouchableOpacity style={styles.locationItem}>
-                                <MaterialIcons name="location-on" size={24} color="#2A7FFF" style={styles.locationIcon} />
-                                <View style={styles.locationInfo}>
-                                    <Text style={styles.locationName}>Chicago, IL</Text>
-                                    <Text style={styles.locationDetails}>O'Hare International Airport</Text>
+                                    <TouchableOpacity style={styles.locationItem}>
+                                        <MaterialIcons name="location-on" size={24} color="#2A7FFF" style={styles.locationIcon} />
+                                        <View style={styles.locationInfo}>
+                                            <Text style={styles.locationName}>Chicago, IL</Text>
+                                            <Text style={styles.locationDetails}>O'Hare International Airport</Text>
+                                        </View>
+                                        <MaterialIcons name="star" size={24} color="#FFD700" />
+                                    </TouchableOpacity>
                                 </View>
-                                <MaterialIcons name="star" size={24} color="#FFD700" />
-                            </TouchableOpacity>
-                        </View>
 
-                        <View style={styles.section}>
-                            <Text style={styles.sectionTitle}>Current Location</Text>
+                                <View style={styles.section}>
+                                    <Text style={styles.sectionTitle}>Current Location</Text>
                             
-                            <TouchableOpacity style={styles.locationItem}>
-                                <MaterialIcons name="my-location" size={24} color="#2A7FFF" style={styles.locationIcon} />
-                                <View style={styles.locationInfo}>
-                                    <Text style={styles.locationName}>Use Current Location</Text>
-                                    <Text style={styles.locationDetails}>Enable location services</Text>
+                                    <TouchableOpacity 
+                                        style={styles.locationItem}
+                                        onPress={handleCurrentLocation}
+                                        disabled={gettingLocation}
+                                    >
+                                        <MaterialIcons name="my-location" size={24} color="#2A7FFF" style={styles.locationIcon} />
+                                        <View style={styles.locationInfo}>
+                                            <Text style={styles.locationName}>
+                                                {gettingLocation ? 'Getting location...' : 'Use Current Location'}
+                                            </Text>
+                                            <Text style={styles.locationDetails}>
+                                                {gettingLocation ? 'Please wait' : 'Using location services'}
+                                            </Text>
+                                        </View>
+                                        <MaterialIcons name="chevron-right" size={24} color="#999" />
+                                    </TouchableOpacity>
                                 </View>
-                                <MaterialIcons name="chevron-right" size={24} color="#999" />
-                            </TouchableOpacity>
-                        </View>
 
-                        <View style={styles.section}>
-                            <Text style={styles.sectionTitle}>Recents</Text>
+                                <View style={styles.section}>
+                                    <Text style={styles.sectionTitle}>Recents</Text>
 
-                            <TouchableOpacity style={styles.locationItem}>
-                                <MaterialIcons name="location-on" size={24} color="#2A7FFF" style={styles.locationIcon} />
-                                <View style={styles.locationInfo}>
-                                    <Text style={styles.locationName}>Fort Wayne, IN</Text>
-                                    <Text style={styles.locationDetails}>KFWA</Text>
+                                    <TouchableOpacity style={styles.locationItem}>
+                                        <MaterialIcons name="location-on" size={24} color="#2A7FFF" style={styles.locationIcon} />
+                                        <View style={styles.locationInfo}>
+                                            <Text style={styles.locationName}>Fort Wayne, IN</Text>
+                                            <Text style={styles.locationDetails}>KFWA</Text>
+                                        </View>
+                                        <MaterialIcons name="chevron-right" size={24} color="#999" />
+                                    </TouchableOpacity>
                                 </View>
-                                <MaterialIcons name="chevron-right" size={24} color="#999" />
-                            </TouchableOpacity>
-                        </View>
+                            </>
+                        )}
                     </ScrollView>
                 </View>
             </Animated.View>
@@ -236,5 +399,11 @@ const styles = StyleSheet.create({
     locationDetails: {
         fontSize: 14,
         color: '#666',
+    },
+    noResults: {
+        fontSize: 16,
+        color: '#999',
+        textAlign: 'center',
+        paddingVertical: 20,
     },
 });
