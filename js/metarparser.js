@@ -1,4 +1,6 @@
-const {OPENWEATHER_API_KEY} = require('./apikey.js');
+import Constants from 'expo-constants';
+
+const OPENWEATHER_API_KEY = Constants.expoConfig?.extra?.openWeatherApiKey || process.env.OPENWEATHER_API_KEY;
 
 function metarparser(data, lat, lon, callback) {
     var output = {};
