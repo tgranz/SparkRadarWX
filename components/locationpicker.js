@@ -111,7 +111,7 @@ export default function Sidebar({ onClose, onLocationSelect }) {
 
             // Get current location
             const location = await Location.getCurrentPositionAsync({
-                accuracy: Location.Accuracy.Balanced
+                accuracy: Location.Accuracy.High,
             });
 
             const { latitude, longitude } = location.coords;

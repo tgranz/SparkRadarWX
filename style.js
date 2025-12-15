@@ -67,6 +67,7 @@ function style() {
 
 // https://erikflowers.github.io/weather-icons/
 function wxicons(id) {
+    if (id === undefined || id === null) id = '';
     id = id.toString().toLowerCase();
     // Charactes are strange and appear ambiguous.
     // This function maps icon IDs to characters.
@@ -95,13 +96,14 @@ function wxicons(id) {
 }
 
 function getIconColor (icon) {
-    icon = icon.toLowerCase();
-    if (icon.includes('partly')) return '#af8101ff';
-    if (icon.includes('clear')) return '#ffaa00';
-    if (icon.includes('cloud') || icon.includes('overcast')) return '#888888';
-    if (icon.includes('rain') || icon.includes('snow')) return '#2a7fff';
-    if (icon.includes('thunderstorm')) return '#333333';
-    if (icon.includes('clear')) return '#8400ff';
+    if (icon === undefined || icon === null) return '#ffaa00';
+    const lower = icon.toString().toLowerCase();
+    if (lower.includes('partly')) return '#af8101ff';
+    if (lower.includes('clear')) return '#ffaa00';
+    if (lower.includes('cloud') || lower.includes('overcast')) return '#888888';
+    if (lower.includes('rain') || lower.includes('snow')) return '#2a7fff';
+    if (lower.includes('thunderstorm')) return '#333333';
+    if (lower.includes('clear')) return '#8400ff';
     return '#ffaa00';
 };
 

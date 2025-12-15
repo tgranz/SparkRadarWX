@@ -23,6 +23,7 @@ import metarparser from './js/metarparser.js';
 import Sidebar from './components/sidebar.js';
 import LocationPicker from './components/locationpicker.js';
 import HourlyScreen from './components/hourly.js';
+import AlertsScreen from './components/alerts.js';
 
 // Styles
 const styles = style();
@@ -30,6 +31,15 @@ const styles = style();
 function getDataFromCondition(condition) {
   var id = 'sunny';
   var time = "day";
+  
+  // Handle null/undefined condition
+  if (!condition) {
+    return {
+      icon: wxicons(time + '-' + id),
+      condition: 'Unknown'
+    };
+  }
+  
   var newCondition = condition.toLowerCase();
 
   if (condition.toLowerCase().includes("overcast")) {
@@ -56,6 +66,12 @@ function getDataFromCondition(condition) {
   } else if (condition.toLowerCase().includes("fog")) {
     id = "fog";
     newCondition = "Fog";
+  } else if (condition.toLowerCase().includes("thunderstorm") || condition.toLowerCase().includes("storm")) {
+    id = "thunderstorm";
+    newCondition = "Thunderstorm";
+  } else if (condition.toLowerCase().includes("rain") || condition.toLowerCase().includes("drizzle")) {
+    id = "rain";
+    newCondition = "Rain";
   }
 
   return {
@@ -77,6 +93,7 @@ export default function App() {
   const [locationOpen, setLocationOpen] = useState(false);
   const [currentScreen, setCurrentScreen] = useState('home');
   const [data, setData] = useState([]);
+  const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [coordinates, setCoordinates] = useState({ lat: 40.97959, lon: -85.17173 });
   const fadeAnim = useRef(new Animated.Value(1)).current;
@@ -88,9 +105,10 @@ export default function App() {
     fetch('https://services9.arcgis.com/RHVPKKiFTONKtxq3/arcgis/rest/services/NOAA_METAR_current_wind_speed_direction_v1/FeatureServer/0/query?where=1=1&outFields=*&f=geojson', { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36" })
       .then((response) => response.json())
       .then((json) => {
-        const parsedData = metarparser(json.features, lat, lon, (owmData) => {
+        const parsedData = metarparser(json.features, lat, lon, (owmData, alertsToAdd) => {
           // Callback: Update data when OpenWeatherMap fetch completes
-          setData(owmData);
+          if (owmData) setData(owmData);
+          if (alertsToAdd) setAlerts(alertsToAdd);
           setLoading(false);
         });
         setData(parsedData);
@@ -148,36 +166,51 @@ export default function App() {
   });
 
   // Alert elements
-  /*var alertelements = [
-    (
-    <TouchableOpacity>
-        <View style={[styles.cardContainer, open && { pointerEvents: 'none' }, { flexDirection: 'row', alignItems: 'center', backgroundColor:"#ff2121", justifyContent: 'space-between' } ]}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-          <MaterialIcons name="warning" size={32} color="#ffffff" style={{ marginLeft: 0 }} />
-          <View style={{ marginLeft: 10 }}>
-            <Text style={[styles.header, { fontSize: 16, color: "#ffffff", textAlign: 'right' }]}>Severe Thunderstorm Warning</Text>
-            <Text style={[styles.text, { color: "#ffffff", textAlign: 'right' }]}>In effect until 6:30PM 12/30</Text>
-          </View>
-        </View>
-      </View>
-    </TouchableOpacity>
-    ),
-    (
-      <TouchableOpacity>
-        <View style={[styles.cardContainer, open && { pointerEvents: 'none' }, { flexDirection: 'row', backgroundColor:"#ffcc00", alignItems: 'center', justifyContent: 'space-between' }]}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-            <MaterialIcons name="warning" size={32} color="#000000" style={{ marginLeft: 0 }} />
-            <View style={{ marginLeft: 10 }}>
-              <Text style={[styles.header, { fontSize: 16, textAlign: 'right' }]}>Severe Thunderstorm Watch</Text>
-              <Text style={[styles.text, { textAlign: 'right' }]}>In effect until 9:00PM 12/30</Text>
-            </View>
-          </View>
-        </View>
-      </TouchableOpacity>
-    )
-  ];*/
-  
   var alertelements = [];
+  if (alerts && alerts.features && alerts.features.length > 0) {
+    for (var i = 0; i < alerts.features.length; i++) {
+      var alert = alerts.features[i];
+      
+      // Skip if event is null or undefined
+      if (!alert.properties || !alert.properties.event) {
+        console.log("Skipping alert with no event data");
+        continue;
+      }
+      
+      var thiscolor = "#ff2121";
+      var thisTextColor = "#ffffff";
+
+      if (alert.properties.event.toLowerCase().includes("tornado")) {
+        thiscolor = "#da1990ff";
+        thisTextColor = "#ffffff";
+      } else if (alert.properties.event.toLowerCase().includes("warning")) {
+        thiscolor = "#ff2121";
+        thisTextColor = "#ffffff";
+      } else if (alert.properties.event.toLowerCase().includes("watch")) {
+        thiscolor = "#ff7e00";
+        thisTextColor = "#000000";
+      } else {
+        thiscolor = "#ffff00";
+        thisTextColor = "#000000";
+      }
+
+      alertelements = alertelements.concat(
+        (
+          <TouchableOpacity onPress={() => navigateToScreen('alerts')}>
+            <View style={[styles.cardContainer, open && { pointerEvents: 'none' }, { flexDirection: 'row', alignItems: 'center', backgroundColor: thiscolor, justifyContent: 'space-between' }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                <MaterialIcons name="warning" size={32} color={thisTextColor} style={{ marginLeft: 0 }} />
+                <View style={{ marginLeft: 10 }}>
+                  <Text style={[styles.header, { fontSize: 16, color: thisTextColor, textAlign: 'right' }]}>{alert.properties.event}</Text>
+                  <Text style={[styles.text, { color: thisTextColor, textAlign: 'right' }]}>In effect until 6:30PM 12/30</Text>
+                </View>
+              </View>
+            </View>
+          </TouchableOpacity>
+        ),
+      );
+    }
+  }
   
 
   if (loading) {
@@ -202,6 +235,17 @@ export default function App() {
           <HourlyScreen onMenuOpen={() => setOpen(true)} data={data} />
         </Animated.View>
         { open && <Sidebar onClose={() => setOpen(false)} onNavigate={navigateToScreen} /> }
+      </View>
+    );
+  }
+
+  // Show alerts screen if selected
+  if (currentScreen === 'alerts') {
+    return (
+      <View style={{ flex: 1 }}>
+        <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
+          <AlertsScreen onBack={() => navigateToScreen('home')} alerts={alerts} />
+        </Animated.View>
       </View>
     );
   }

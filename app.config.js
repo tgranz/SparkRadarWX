@@ -1,11 +1,13 @@
+require('dotenv').config();
+
 module.exports = {
   expo: {
     name: "SparkRadarWX",
     slug: "SparkRadarWX",
-    version: "0.1.0",
+    version: "0.1.2",
     orientation: "portrait",
     icon: "./assets/icon.png",
-    userInterfaceStyle: "light",
+    userInterfaceStyle: "dark",
     newArchEnabled: true,
     splash: {
       image: "./assets/splash-icon.png",
@@ -21,7 +23,7 @@ module.exports = {
         backgroundColor: "#ffffff"
       },
       edgeToEdgeEnabled: true,
-      package: "com.anonymous.SparkRadarWX",
+      package: "io.github.tgranz.SparkRadarWX",
       permissions: ["ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION"]
     },
     web: {

@@ -7,4 +7,4 @@ notepad.txt
 android/
 
 # Environment variables
-apikey.js
+.env

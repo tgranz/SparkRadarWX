@@ -59,9 +59,11 @@ function metarparser(data, lat, lon, callback) {
     }
 
     // If distance is too large, or data is still bad, return openWeatherMap data
-    if (output.DISTANCE > 15
-        || output.properties.WEATHER.toLowerCase().includes("automated observation")
-    ) {
+    const isAutomatedObs = (
+        output && output.properties && typeof output.properties.WEATHER === 'string' &&
+        output.properties.WEATHER.toLowerCase().includes("automated observation")
+    );
+    if (output.DISTANCE > 15 || isAutomatedObs) {
 
         console.log("Bad data from second nearest METAR", output.properties.STATION + ". Trying OpenWeatherMap...");
         if (OPENWEATHER_API_KEY) { // Remove negation to enable OWM fetch, this is used to prevent exceeding rate limit
@@ -82,9 +84,21 @@ function metarparser(data, lat, lon, callback) {
                         SKY_CONDTN: json.current.weather[0].main,
                     };
                     console.log("OpenWeatherMap data succeeded");
-                    if (callback) {
-                        callback(owmData);
-                    }
+                    
+                    // Fetch alerts after getting OWM data
+                    fetch(`https://api.weather.gov/alerts/active?message_type=alert&point=${lat},${lon}`)
+                        .then((response) => response.json())
+                        .then((alertJson) => {
+                            if (callback) {
+                                callback(owmData, alertJson);
+                            }
+                        })
+                        .catch((error) => {
+                            console.error("Error fetching weather alerts:", error);
+                            if (callback) {
+                                callback(owmData, null);
+                            }
+                        });
                 })
                 .catch((error) => {
                     console.error("Error fetching OpenWeatherMap data:", error);
@@ -111,6 +125,18 @@ function metarparser(data, lat, lon, callback) {
     // Formatting
     output.properties.WEATHER = output.properties.WEATHER == "No significant weather present at this time." ? 
         output.properties.SKY_CONDTN : output.properties.WEATHER;
+
+    // Once we have current conditions, we can now fetch active alerts
+    fetch(`https://api.weather.gov/alerts/active?message_type=alert&point=${lat},${lon}`)
+        .then((response) => response.json())
+        .then((json) => {
+            if (callback) {
+                callback(null, json);
+            }
+        })
+        .catch((error) => {
+            console.error("Error fetching weather alerts:", error);
+        });
 
     return output.properties;
 }
