@@ -342,7 +342,7 @@ export default function App() {
 
         <View style={[styles.cardContainer, (open || locationOpen) && { pointerEvents: 'none' }, { paddingHorizontal: 10 }]}>
           <TouchableOpacity 
-            style={{ width: '100%', height: 200, borderRadius: 20, overflow: 'hidden' }}
+            style={{ width: '100%', height: 200, borderRadius: 16, overflow: 'hidden' }}
             onPress={() => navigateToScreen('radar')}
             activeOpacity={0.8}
           >
