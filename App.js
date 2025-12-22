@@ -15,6 +15,7 @@ import { Text, View, TouchableOpacity, Image, Animated } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useFonts } from 'expo-font';
 import { LinearGradient } from 'expo-linear-gradient';
+import { WebView } from 'react-native-webview';
 import { style, wxicons, getIconColor } from './style';
 import metarparser from './js/metarparser.js';
 
@@ -24,6 +25,7 @@ import Sidebar from './components/sidebar.js';
 import LocationPicker from './components/locationpicker.js';
 import HourlyScreen from './components/hourly.js';
 import AlertsScreen from './components/alerts.js';
+import RadarScreen from './components/radar.js';
 
 // Styles
 const styles = style();
@@ -250,6 +252,17 @@ export default function App() {
     );
   }
 
+  // Show radar screen if selected
+  if (currentScreen === 'radar') {
+    return (
+      <View style={{ flex: 1 }}>
+        <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
+          <RadarScreen onBack={() => navigateToScreen('home')} coordinates={coordinates} />
+        </Animated.View>
+      </View>
+    );
+  }
+
   return (
     <View style={{ flex: 1 }}>
       <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
@@ -325,6 +338,22 @@ export default function App() {
               </View>
             </View>
           </View>
+        </View>
+
+        <View style={[styles.cardContainer, (open || locationOpen) && { pointerEvents: 'none' }, { paddingHorizontal: 10 }]}>
+          <TouchableOpacity 
+            style={{ width: '100%', height: 200, borderRadius: 20, overflow: 'hidden' }}
+            onPress={() => navigateToScreen('radar')}
+            activeOpacity={0.8}
+          >
+            <WebView
+              source={{ uri: `https://sparkradar.app?mode=preview&lat=${coordinates.lat}&lon=${coordinates.lon}` }}
+              style={{ flex: 1 }}
+              pointerEvents="none"
+              scrollEnabled={false}
+              bounces={false}
+            />
+          </TouchableOpacity>
         </View>
 
         </LinearGradient>

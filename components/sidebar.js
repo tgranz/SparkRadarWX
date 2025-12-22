@@ -69,7 +69,7 @@ export default function Sidebar({ onClose, onNavigate }) {
                         <MaterialIcons style={styles.sideIcon} name="calendar-month" size={30} color="black" />
                         <Text style={styles.itemText}>Daily</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.item}>
+                    <TouchableOpacity style={styles.item} onPress={() => { onNavigate('radar'); }}>
                         <MaterialIcons style={styles.sideIcon} name="radar" size={30} color="black" />
                         <Text style={styles.itemText}>Radar</Text>
                     </TouchableOpacity>
