@@ -8,7 +8,8 @@ Licensed with Apache 2.0. (c) Tyler Granzow 2025.
 <br>
 
 # Download
-Get it from the releases section on the right side of this README or at the bottom of the page.
+- Get it with **Obtainium**: Add `https://github.com/tgranz/SparkRadarWX` as a source. Optionally, tick "include prereleases".
+- Get it from the releases section on this page.
 
 <br>
 
