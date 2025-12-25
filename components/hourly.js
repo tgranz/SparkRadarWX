@@ -4,10 +4,11 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { style, wxicons, getIconColor } from '../style';
-
-const styles = style();
+import { useTheme } from '../theme';
 
 export default function HourlyScreen({ onMenuOpen, data }) {
+    const { theme, isDark } = useTheme();
+    const styles = style(theme);
     // Sample hourly data - in production, this would come from an API
     const hourlyData = [
         { time: '12 PM', temp: 75, icon: 'day-clear', condition: 'Sunny', precipitation: 0 },
@@ -25,13 +26,13 @@ export default function HourlyScreen({ onMenuOpen, data }) {
     ];
 
     return (
-        <LinearGradient colors={['#27BEFF', '#2A7FFF']} style={[styles.gradientBackground, { zIndex: 1 }]}>
+        <LinearGradient colors={[theme.gradientStart, theme.gradientEnd]} style={[styles.gradientBackground, { zIndex: 1 }]}>
             <StatusBar style="auto" />
             
             <View style={[styles.headerContainer]}>
                 <View style={styles.side}>
                     <TouchableOpacity onPress={onMenuOpen}>
-                        <MaterialIcons name="menu" size={35} color="black" />
+                        <MaterialIcons name="menu" size={35} color={theme.iconColor} />
                     </TouchableOpacity>
                 </View>
 
@@ -48,9 +49,9 @@ export default function HourlyScreen({ onMenuOpen, data }) {
                 showsVerticalScrollIndicator={false}
             >
                 {hourlyData.map((hour, index) => (
-                    <View key={index} style={localStyles.hourCard}>
+                    <View key={index} style={[localStyles.hourCard, { backgroundColor: theme.cardBackground }]}>
                         <View style={localStyles.timeSection}>
-                            <Text style={localStyles.timeText}>{hour.time}</Text>
+                            <Text style={[localStyles.timeText, { color: theme.primaryText }]}>{hour.time}</Text>
                         </View>
 
                         <View style={localStyles.iconSection}>
@@ -60,13 +61,13 @@ export default function HourlyScreen({ onMenuOpen, data }) {
                         </View>
 
                         <View style={localStyles.dataSection}>
-                            <Text style={localStyles.tempText}>{hour.temp}°</Text>
-                            <Text style={localStyles.conditionText}>{hour.condition}</Text>
+                            <Text style={[localStyles.tempText, { color: theme.primaryText }]}>{hour.temp}°</Text>
+                            <Text style={[localStyles.conditionText, { color: theme.secondaryText }]}>{hour.condition}</Text>
                         </View>
 
                         <View style={localStyles.precipSection}>
-                            <MaterialIcons name="water-drop" size={20} color="#2a7fff" />
-                            <Text style={localStyles.precipText}>{hour.precipitation}%</Text>
+                            <MaterialIcons name="water-drop" size={20} color={theme.weatherIconPrimary} />
+                            <Text style={[localStyles.precipText, { color: theme.secondaryText }]}>{hour.precipitation}%</Text>
                         </View>
                     </View>
                 ))}
@@ -77,7 +78,6 @@ export default function HourlyScreen({ onMenuOpen, data }) {
 
 const localStyles = StyleSheet.create({
     hourCard: {
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
         borderRadius: 20,
         padding: 15,
         marginHorizontal: 20,
@@ -92,7 +92,6 @@ const localStyles = StyleSheet.create({
     timeText: {
         fontSize: 16,
         fontWeight: 'bold',
-        color: '#333',
     },
     iconSection: {
         flex: 1,
@@ -105,11 +104,9 @@ const localStyles = StyleSheet.create({
     tempText: {
         fontSize: 24,
         fontWeight: 'bold',
-        color: '#333',
     },
     conditionText: {
         fontSize: 12,
-        color: '#666',
         marginTop: 2,
     },
     precipSection: {
@@ -121,7 +118,6 @@ const localStyles = StyleSheet.create({
     },
     precipText: {
         fontSize: 14,
-        color: '#666',
         fontWeight: '600',
     },
 });
