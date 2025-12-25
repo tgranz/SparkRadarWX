@@ -17,6 +17,7 @@ import { useFonts } from 'expo-font';
 import { LinearGradient } from 'expo-linear-gradient';
 import { WebView } from 'react-native-webview';
 import { style, wxicons, getIconColor } from './style';
+import { useTheme } from './theme';
 import metarparser from './js/metarparser.js';
 
 
@@ -26,9 +27,6 @@ import LocationPicker from './components/locationpicker.js';
 import HourlyScreen from './components/hourly.js';
 import AlertsScreen from './components/alerts.js';
 import RadarScreen from './components/radar.js';
-
-// Styles
-const styles = style();
 
 function getDataFromCondition(condition) {
   var id = 'sunny';
@@ -84,6 +82,12 @@ function getDataFromCondition(condition) {
 
 // Main app component
 export default function App() {
+  // Get current theme
+  const { theme, isDark } = useTheme();
+  
+  // Create styles with theme colors
+  const styles = style(theme);
+  
   // Load fonts
   const [fontsLoaded] = useFonts({
     Onest: require('./assets/fonts/onest.ttf'),
@@ -217,7 +221,7 @@ export default function App() {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.gradientStart }}>
       <Animated.Image 
         source={require('./assets/spinner.png')} 
         style={{ width: 75, height: 75, transform: [{ rotate: spin }] }} 
@@ -266,13 +270,13 @@ export default function App() {
   return (
     <View style={{ flex: 1 }}>
       <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
-        <LinearGradient colors={['#27BEFF', '#2A7FFF']} style={[styles.gradientBackground, { zIndex: 1 }]} >
+        <LinearGradient colors={[theme.gradientStart, theme.gradientEnd]} style={[styles.gradientBackground, { zIndex: 1 }]} >
 
         <StatusBar style="auto" />
         <View style={[styles.headerContainer, (open || locationOpen) && { pointerEvents: 'none' }]}>
           <View style={styles.side}>
               <TouchableOpacity onPress={() => { setOpen(true) }}>
-              <MaterialIcons name="menu" size={35} color="black" />
+              <MaterialIcons name="menu" size={35} color={theme.iconColor} />
             </TouchableOpacity>
           </View>
 
@@ -285,7 +289,7 @@ export default function App() {
 
           <View style={styles.side}>
             <TouchableOpacity>
-              <MaterialIcons name="star" size={35} color="black" />
+              <MaterialIcons name="star" size={35} color={theme.iconColor} />
             </TouchableOpacity>
           </View>
         </View>
@@ -307,14 +311,14 @@ export default function App() {
           <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-around' }}>
             <View style={{ gap: 15 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <MaterialIcons name="opacity" size={24} color="#2a7fff" />
+                <MaterialIcons name="opacity" size={24} color={theme.weatherIconPrimary} />
                 <View>
                   <Text style={styles.text}>Dew Point</Text>
                   <Text style={[styles.text, { fontWeight: 'bold' }]}>{Math.round(data.DEW_POINT)}°</Text>
                 </View>
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <MaterialIcons name="compress" size={24} color="#2a7fff" />
+                <MaterialIcons name="compress" size={24} color={theme.weatherIconPrimary} />
                 <View>
                   <Text style={styles.text}>Pressure</Text>
                   <Text style={[styles.text, { fontWeight: 'bold' }]}>{data.PRESSURE} mb</Text>
@@ -323,14 +327,14 @@ export default function App() {
             </View>
             <View style={{ gap: 15 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <MaterialIcons name="water-drop" size={24} color="#2a7fff" />
+                <MaterialIcons name="water-drop" size={24} color={theme.weatherIconPrimary} />
                 <View>
                   <Text style={styles.text}>Humidity</Text>
                   <Text style={[styles.text, { fontWeight: 'bold' }]}>{Math.round(data.R_HUMIDITY)}%</Text>
                 </View>
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <MaterialIcons name="visibility" size={24} color="#2a7fff" />
+                <MaterialIcons name="visibility" size={24} color={theme.weatherIconPrimary} />
                 <View>
                   <Text style={styles.text}>Visibility</Text>
                   <Text style={[styles.text, { fontWeight: 'bold' }]}>{Math.round(data.VISIBILITY)} m</Text>

@@ -3,10 +3,9 @@ import { View, Text, TouchableOpacity, ScrollView, BackHandler } from 'react-nat
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { style } from '../style';
+import { useTheme } from '../theme';
 
-const styles = style();
-
-function convertIsoToLocal(isoString) {
+const convertIsoToLocal = (isoString) => {
     const date = new Date(isoString);
     var hours = date.getHours();
     const minutes = date.getMinutes().toString().padStart(2, '0');
@@ -25,6 +24,8 @@ function convertIsoToLocal(isoString) {
 }
 
 export default function AlertsScreen({ onBack, alerts }) {
+    const { theme, isDark } = useTheme();
+    const styles = style(theme);
     const features = alerts && alerts.features ? alerts.features : [];
 
     useEffect(() => {
@@ -39,11 +40,11 @@ export default function AlertsScreen({ onBack, alerts }) {
     return (
 
         <View style={{ flex: 1 }}>
-            <LinearGradient colors={['#27BEFF', '#2A7FFF']} style={[styles.gradientBackground, { zIndex: -1 }]} >
+            <LinearGradient colors={[theme.gradientStart, theme.gradientEnd]} style={[styles.gradientBackground, { zIndex: -1 }]} >
                 <View style={[styles.headerContainer]}>
                     <View style={styles.side}>
                         <TouchableOpacity onPress={onBack}>
-                            <MaterialIcons name="arrow-back" size={35} color="black" />
+                            <MaterialIcons name="arrow-back" size={35} color={theme.iconColor} />
                         </TouchableOpacity>
                     </View>
                     <View style={styles.titleContainer}>

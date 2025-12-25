@@ -4,7 +4,17 @@ import Constants from 'expo-constants';
 
 
 // Stylesheet
-function style() {
+function style(themeColors = {}) {
+    // Default colors for light theme if no theme provided
+    const colors = {
+        cardBackground: themeColors.cardBackground || '#FFFFFF',
+        primaryText: themeColors.primaryText || '#000000',
+        secondaryText: themeColors.secondaryText || '#666666',
+        borderColor: themeColors.borderColor || '#F0F0F0',
+        shadowColor: themeColors.shadowColor || '#000000',
+        ...themeColors
+    };
+    
     return StyleSheet.create({
         headerContainer: {
             flexDirection: 'row',
@@ -29,17 +39,19 @@ function style() {
             fontFamily: 'Onest',
             fontSize: 18,
             fontWeight: 'bold',
+            color: colors.primaryText,
         },
         text: {
             fontFamily: 'Onest',
             fontSize: 14,
+            color: colors.primaryText,
         },
         gradientBackground: {
             width: '100%',
             height: '100%',
         },
         cardContainer: {
-            backgroundColor: 'white',
+            backgroundColor: colors.cardBackground,
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'center',
@@ -48,7 +60,7 @@ function style() {
             paddingVertical: 10,
             marginHorizontal: 20,
             marginVertical: 10,
-            shadowColor: '#000',
+            shadowColor: colors.shadowColor,
             shadowOffset: { width: 0, height: 2 },
             shadowOpacity: 0.15,
             shadowRadius: 4,

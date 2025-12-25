@@ -3,9 +3,11 @@ import { View, Text, TouchableOpacity, StyleSheet, Dimensions, Animated, TextInp
 import { MaterialIcons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import * as Location from 'expo-location';
+import { useTheme } from '../theme';
 const { width, height } = Dimensions.get('window');
 
 export default function Sidebar({ onClose, onLocationSelect }) {
+    const { theme, isDark } = useTheme();
     const slideAnim = useRef(new Animated.Value(height)).current;
     const fadeAnim = useRef(new Animated.Value(0)).current;
     const [searchQuery, setSearchQuery] = React.useState('');
@@ -155,22 +157,22 @@ export default function Sidebar({ onClose, onLocationSelect }) {
             </Animated.View>
 
             <Animated.View style={[styles.drawerContainer, { transform: [{ translateY: slideAnim }] }]}>
-                <View style={styles.drawer}>
+                <View style={[styles.drawer, { backgroundColor: theme.sidebarBackground }]}>
                     {/*<View style={styles.handle} />*/}
                     
                     <View style={styles.header}>
-                        <Text style={styles.title}>Select Location</Text>
+                        <Text style={[styles.title, { color: theme.primaryText }]}>Select Location</Text>
                         <TouchableOpacity onPress={handleClose}>
-                            <MaterialIcons name="close" size={28} color="black" />
+                            <MaterialIcons name="close" size={28} color={theme.iconColor} />
                         </TouchableOpacity>
                     </View>
 
-                    <View style={styles.searchContainer}>
-                        <MaterialIcons name="search" size={24} color="#666" style={styles.searchIcon} />
+                    <View style={[styles.searchContainer, { backgroundColor: theme.searchBackground }]}>
+                        <MaterialIcons name="search" size={24} color={theme.secondaryText} style={styles.searchIcon} />
                         <TextInput
-                            style={styles.searchInput}
+                            style={[styles.searchInput, { color: theme.primaryText }]}
                             placeholder="Search for a location..."
-                            placeholderTextColor="#999"
+                            placeholderTextColor={theme.secondaryText}
                             value={searchQuery}
                             onChangeText={setSearchQuery}
                             onSubmitEditing={handleSearch}
@@ -184,7 +186,7 @@ export default function Sidebar({ onClose, onLocationSelect }) {
                                 setSearchResults([]);
                                 setIsSearching(false);
                             }}>
-                                <MaterialIcons name="clear" size={20} color="#666" />
+                                <MaterialIcons name="clear" size={20} color={theme.secondaryText} />
                             </TouchableOpacity>
                         )}
                     </View>
@@ -192,98 +194,98 @@ export default function Sidebar({ onClose, onLocationSelect }) {
                     <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
                         {isSearching && searchResults.length === 0 && searchQuery.length > 0 ? (
                             <View style={styles.section}>
-                                <Text style={styles.sectionTitle}>Search Results</Text>
-                                <Text style={styles.noResults}>Searching...</Text>
+                                <Text style={[styles.sectionTitle, { color: theme.primaryText }]}>Search Results</Text>
+                                <Text style={[styles.noResults, { color: theme.secondaryText }]}>Searching...</Text>
                             </View>
                         ) : searchResults.length > 0 ? (
                             <View style={styles.section}>
-                                <Text style={styles.sectionTitle}>Search Results</Text>
+                                <Text style={[styles.sectionTitle, { color: theme.primaryText }]}>Search Results</Text>
                                 {searchResults.map((result, index) => (
                                     <TouchableOpacity 
                                         key={index} 
-                                        style={styles.locationItem}
+                                        style={[styles.locationItem, { borderBottomColor: theme.borderColor }]}
                                         onPress={() => handleLocationSelect(result)}
                                     >
-                                        <MaterialIcons name="location-on" size={24} color="#2A7FFF" style={styles.locationIcon} />
+                                        <MaterialIcons name="location-on" size={24} color={theme.weatherIconPrimary} style={styles.locationIcon} />
                                         <View style={styles.locationInfo}>
-                                            <Text style={styles.locationName}>{result.name}</Text>
-                                            <Text style={styles.locationDetails}>
+                                            <Text style={[styles.locationName, { color: theme.primaryText }]}>{result.name}</Text>
+                                            <Text style={[styles.locationDetails, { color: theme.secondaryText }]}>
                                                 {result.expanded_name}
                                             </Text>
                                         </View>
-                                        <MaterialIcons name="chevron-right" size={24} color="#999" />
+                                        <MaterialIcons name="chevron-right" size={24} color={theme.secondaryText} />
                                     </TouchableOpacity>
                                 ))}
                             </View>
                         ) : searchQuery.length > 0 && !isSearching ? (
                             <View style={styles.section}>
-                                <Text style={styles.sectionTitle}>Search Results</Text>
-                                <Text style={styles.noResults}>No locations found</Text>
+                                <Text style={[styles.sectionTitle, { color: theme.primaryText }]}>Search Results</Text>
+                                <Text style={[styles.noResults, { color: theme.secondaryText }]}>No locations found</Text>
                             </View>
                         ) : (
                             <>
                                 <View style={styles.section}>
-                                    <Text style={styles.sectionTitle}>Favorites</Text>
+                                    <Text style={[styles.sectionTitle, { color: theme.primaryText }]}>Favorites</Text>
                             
-                                    <TouchableOpacity style={styles.locationItem}>
-                                        <MaterialIcons name="location-on" size={24} color="#2A7FFF" style={styles.locationIcon} />
+                                    <TouchableOpacity style={[styles.locationItem, { borderBottomColor: theme.borderColor }]}>
+                                        <MaterialIcons name="location-on" size={24} color={theme.weatherIconPrimary} style={styles.locationIcon} />
                                         <View style={styles.locationInfo}>
-                                            <Text style={styles.locationName}>New York, NY</Text>
-                                            <Text style={styles.locationDetails}>KJFK</Text>
+                                            <Text style={[styles.locationName, { color: theme.primaryText }]}>New York, NY</Text>
+                                            <Text style={[styles.locationDetails, { color: theme.secondaryText }]}>KJFK</Text>
                                         </View>
                                         <MaterialIcons name="star" size={24} color="#FFD700" />
                                     </TouchableOpacity>
 
-                                    <TouchableOpacity style={styles.locationItem}>
-                                        <MaterialIcons name="location-on" size={24} color="#2A7FFF" style={styles.locationIcon} />
+                                    <TouchableOpacity style={[styles.locationItem, { borderBottomColor: theme.borderColor }]}>
+                                        <MaterialIcons name="location-on" size={24} color={theme.weatherIconPrimary} style={styles.locationIcon} />
                                         <View style={styles.locationInfo}>
-                                            <Text style={styles.locationName}>Los Angeles, CA</Text>
-                                            <Text style={styles.locationDetails}>KLAX</Text>
+                                            <Text style={[styles.locationName, { color: theme.primaryText }]}>Los Angeles, CA</Text>
+                                            <Text style={[styles.locationDetails, { color: theme.secondaryText }]}>KLAX</Text>
                                         </View>
                                         <MaterialIcons name="star" size={24} color="#FFD700" />
                                     </TouchableOpacity>
 
-                                    <TouchableOpacity style={styles.locationItem}>
-                                        <MaterialIcons name="location-on" size={24} color="#2A7FFF" style={styles.locationIcon} />
+                                    <TouchableOpacity style={[styles.locationItem, { borderBottomColor: theme.borderColor }]}>
+                                        <MaterialIcons name="location-on" size={24} color={theme.weatherIconPrimary} style={styles.locationIcon} />
                                         <View style={styles.locationInfo}>
-                                            <Text style={styles.locationName}>Chicago, IL</Text>
-                                            <Text style={styles.locationDetails}>O'Hare International Airport</Text>
+                                            <Text style={[styles.locationName, { color: theme.primaryText }]}>Chicago, IL</Text>
+                                            <Text style={[styles.locationDetails, { color: theme.secondaryText }]}>O'Hare International Airport</Text>
                                         </View>
                                         <MaterialIcons name="star" size={24} color="#FFD700" />
                                     </TouchableOpacity>
                                 </View>
 
                                 <View style={styles.section}>
-                                    <Text style={styles.sectionTitle}>Current Location</Text>
+                                    <Text style={[styles.sectionTitle, { color: theme.primaryText }]}>Current Location</Text>
                             
                                     <TouchableOpacity 
-                                        style={styles.locationItem}
+                                        style={[styles.locationItem, { borderBottomColor: theme.borderColor }]}
                                         onPress={handleCurrentLocation}
                                         disabled={gettingLocation}
                                     >
-                                        <MaterialIcons name="my-location" size={24} color="#2A7FFF" style={styles.locationIcon} />
+                                        <MaterialIcons name="my-location" size={24} color={theme.weatherIconPrimary} style={styles.locationIcon} />
                                         <View style={styles.locationInfo}>
-                                            <Text style={styles.locationName}>
+                                            <Text style={[styles.locationName, { color: theme.primaryText }]}>
                                                 {gettingLocation ? 'Getting location...' : 'Use Current Location'}
                                             </Text>
-                                            <Text style={styles.locationDetails}>
+                                            <Text style={[styles.locationDetails, { color: theme.secondaryText }]}>
                                                 {gettingLocation ? 'Please wait' : 'Using location services'}
                                             </Text>
                                         </View>
-                                        <MaterialIcons name="chevron-right" size={24} color="#999" />
+                                        <MaterialIcons name="chevron-right" size={24} color={theme.secondaryText} />
                                     </TouchableOpacity>
                                 </View>
 
                                 <View style={styles.section}>
-                                    <Text style={styles.sectionTitle}>Recents</Text>
+                                    <Text style={[styles.sectionTitle, { color: theme.primaryText }]}>Recents</Text>
 
-                                    <TouchableOpacity style={styles.locationItem}>
-                                        <MaterialIcons name="location-on" size={24} color="#2A7FFF" style={styles.locationIcon} />
+                                    <TouchableOpacity style={[styles.locationItem, { borderBottomColor: theme.borderColor }]}>
+                                        <MaterialIcons name="location-on" size={24} color={theme.weatherIconPrimary} style={styles.locationIcon} />
                                         <View style={styles.locationInfo}>
-                                            <Text style={styles.locationName}>Fort Wayne, IN</Text>
-                                            <Text style={styles.locationDetails}>KFWA</Text>
+                                            <Text style={[styles.locationName, { color: theme.primaryText }]}>Fort Wayne, IN</Text>
+                                            <Text style={[styles.locationDetails, { color: theme.secondaryText }]}>KFWA</Text>
                                         </View>
-                                        <MaterialIcons name="chevron-right" size={24} color="#999" />
+                                        <MaterialIcons name="chevron-right" size={24} color={theme.secondaryText} />
                                     </TouchableOpacity>
                                 </View>
                             </>
@@ -321,7 +323,6 @@ const styles = StyleSheet.create({
     },
     drawer: {
         flex: 1,
-        backgroundColor: 'white',
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
         padding: 20,
@@ -352,7 +353,6 @@ const styles = StyleSheet.create({
     searchContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#F5F5F5',
         borderRadius: 12,
         paddingHorizontal: 12,
         marginBottom: 20,
@@ -364,7 +364,6 @@ const styles = StyleSheet.create({
         flex: 1,
         height: 48,
         fontSize: 16,
-        color: '#000',
     },
     content: {
         flex: 1,
@@ -376,14 +375,12 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold',
         marginBottom: 12,
-        color: '#333',
     },
     locationItem: {
         flexDirection: 'row',
         alignItems: 'center',
         paddingVertical: 12,
         borderBottomWidth: 1,
-        borderBottomColor: '#F0F0F0',
     },
     locationIcon: {
         marginRight: 12,
@@ -398,11 +395,9 @@ const styles = StyleSheet.create({
     },
     locationDetails: {
         fontSize: 14,
-        color: '#666',
     },
     noResults: {
         fontSize: 16,
-        color: '#999',
         textAlign: 'center',
         paddingVertical: 20,
     },
