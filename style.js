@@ -103,6 +103,8 @@ function wxicons(id) {
         'night-haze': '',
         'night-fog': '',
         'day-fog': '',
+        'night-mist': '',
+        'day-mist': '',
         '': '',
     }[id];
 }
@@ -115,6 +117,7 @@ function getIconColor (icon) {
     if (lower.includes('cloud') || lower.includes('overcast')) return '#888888';
     if (lower.includes('rain') || lower.includes('snow')) return '#2a7fff';
     if (lower.includes('thunderstorm')) return '#333333';
+    if (lower.includes('fog') || lower.includes('haze') || lower.includes('mist')) return '#999999';
     if (lower.includes('clear')) return '#8400ff';
     return '#ffaa00';
 };

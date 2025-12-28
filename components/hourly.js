@@ -1,14 +1,25 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, BackHandler } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { style, wxicons, getIconColor } from '../style';
 import { useTheme } from '../theme';
 
-export default function HourlyScreen({ onMenuOpen, data }) {
+export default function HourlyScreen({ onMenuOpen, onBack, data }) {
     const { theme, isDark } = useTheme();
     const styles = style(theme);
+
+    useEffect(() => {
+        const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+            onBack();
+            return true;
+        });
+
+        return () => backHandler.remove();
+    }, [onBack]);
+    
+
     // Sample hourly data - in production, this would come from an API
     const hourlyData = [
         { time: '12 PM', temp: 75, icon: 'day-clear', condition: 'Sunny', precipitation: 0 },

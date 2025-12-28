@@ -16,6 +16,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useFonts } from 'expo-font';
 import { LinearGradient } from 'expo-linear-gradient';
 import { WebView } from 'react-native-webview';
+import * as Location from 'expo-location';
 import { style, wxicons, getIconColor } from './style';
 import { useTheme } from './theme';
 import metarparser from './js/metarparser.js';
@@ -66,6 +67,9 @@ function getDataFromCondition(condition) {
   } else if (condition.toLowerCase().includes("fog")) {
     id = "fog";
     newCondition = "Fog";
+  } else if (condition.toLowerCase().includes("mist")) {
+    id = "mist";
+    newCondition = "Mist";
   } else if (condition.toLowerCase().includes("thunderstorm") || condition.toLowerCase().includes("storm")) {
     id = "thunderstorm";
     newCondition = "Thunderstorm";
@@ -101,7 +105,8 @@ export default function App() {
   const [data, setData] = useState([]);
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [coordinates, setCoordinates] = useState({ lat: 40.97959, lon: -85.17173 });
+  const FALLBACK_COORDS = { lat: 40.97959, lon: -85.17173 };
+  const [coordinates, setCoordinates] = useState(FALLBACK_COORDS);
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const [locationName, setLocationName] = useState("Current Location");
 
@@ -127,7 +132,30 @@ export default function App() {
   };
 
   useEffect(() => {
-    loadCurrentConditions(coordinates.lat, coordinates.lon);
+    // Fetch current location on app open
+    (async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          console.warn('Location permission denied; using fallback coordinates');
+          setCoordinates(FALLBACK_COORDS);
+          return;
+        }
+
+        const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        setCoordinates({ lat: location.coords.latitude, lon: location.coords.longitude });
+      } catch (err) {
+        console.error('Error fetching location; using fallback coordinates', err);
+        setCoordinates(FALLBACK_COORDS);
+      }
+    })();
+  }, []);
+    
+
+  useEffect(() => {
+    if (coordinates.lat !== null && coordinates.lon !== null) {
+      loadCurrentConditions(coordinates.lat, coordinates.lon);
+    }
   }, [coordinates]);
 
   // Animate screen transitions
@@ -238,7 +266,7 @@ export default function App() {
     return (
       <View style={{ flex: 1 }}>
         <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
-          <HourlyScreen onMenuOpen={() => setOpen(true)} data={data} />
+          <HourlyScreen onMenuOpen={() => setOpen(true)} onBack={() => navigateToScreen('home')} data={data} />
         </Animated.View>
         { open && <Sidebar onClose={() => setOpen(false)} onNavigate={navigateToScreen} /> }
       </View>
@@ -337,7 +365,7 @@ export default function App() {
                 <MaterialIcons name="visibility" size={24} color={theme.weatherIconPrimary} />
                 <View>
                   <Text style={styles.text}>Visibility</Text>
-                  <Text style={[styles.text, { fontWeight: 'bold' }]}>{Math.round(data.VISIBILITY)} m</Text>
+                  <Text style={[styles.text, { fontWeight: 'bold' }]}>{Math.round(data.VISIBILITY / 1000)} mi</Text>
                 </View>
               </View>
             </View>
