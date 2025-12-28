@@ -2,9 +2,11 @@ import React, { useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Dimensions, Animated } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
+import { useTheme } from '../theme';
 const { width } = Dimensions.get('window');
 
 export default function Sidebar({ onClose, onNavigate }) {
+    const { theme, isDark } = useTheme();
     const slideAnim = useRef(new Animated.Value(-width * 0.7)).current;
     const fadeAnim = useRef(new Animated.Value(0)).current;
 
@@ -49,45 +51,45 @@ export default function Sidebar({ onClose, onNavigate }) {
             </Animated.View>
             
             <Animated.View style={[styles.sidebarContainer, { transform: [{ translateX: slideAnim }] }]}>
-                <View style={styles.sidebar}>
+                <View style={[styles.sidebar, { backgroundColor: theme.sidebarBackground }]}>
                     <View style={styles.header}>
-                        <Text style={styles.title}>Menu</Text>
+                        <Text style={[styles.title, { color: theme.primaryText }]}>Menu</Text>
                         <TouchableOpacity onPress={handleClose}>
-                            <MaterialIcons name="close" size={28} color="black" />
+                            <MaterialIcons name="close" size={28} color={theme.iconColor} />
                         </TouchableOpacity>
                     </View>
 
                     <TouchableOpacity style={styles.item} onPress={() => { onNavigate('home'); }}>
-                        <MaterialIcons style={styles.sideIcon} name="home" size={30} color="black" />
-                        <Text style={styles.itemText}>Home</Text>
+                        <MaterialIcons style={styles.sideIcon} name="home" size={30} color={theme.iconColor} />
+                        <Text style={[styles.itemText, { color: theme.primaryText }]}>Home</Text>
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.item} onPress={() => { onNavigate('hourly'); }}>
-                        <MaterialIcons style={styles.sideIcon} name="timer" size={30} color="black" />
-                        <Text style={styles.itemText}>Hourly</Text>
+                        <MaterialIcons style={styles.sideIcon} name="timer" size={30} color={theme.iconColor} />
+                        <Text style={[styles.itemText, { color: theme.primaryText }]}>Hourly</Text>
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.item}>
-                        <MaterialIcons style={styles.sideIcon} name="calendar-month" size={30} color="black" />
-                        <Text style={styles.itemText}>Daily</Text>
+                        <MaterialIcons style={styles.sideIcon} name="calendar-month" size={30} color={theme.iconColor} />
+                        <Text style={[styles.itemText, { color: theme.primaryText }]}>Daily</Text>
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.item} onPress={() => { onNavigate('radar'); }}>
-                        <MaterialIcons style={styles.sideIcon} name="radar" size={30} color="black" />
-                        <Text style={styles.itemText}>Radar</Text>
+                        <MaterialIcons style={styles.sideIcon} name="radar" size={30} color={theme.iconColor} />
+                        <Text style={[styles.itemText, { color: theme.primaryText }]}>Radar</Text>
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.item}>
-                        <MaterialIcons style={styles.sideIcon} name="radio" size={30} color="black" />
-                        <Text style={styles.itemText}>Radios</Text>
+                        <MaterialIcons style={styles.sideIcon} name="radio" size={30} color={theme.iconColor} />
+                        <Text style={[styles.itemText, { color: theme.primaryText }]}>Radios</Text>
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.item}>
-                        <MaterialIcons style={styles.sideIcon} name="settings" size={30} color="black" />
-                        <Text style={styles.itemText}>Settings</Text>
+                        <MaterialIcons style={styles.sideIcon} name="settings" size={30} color={theme.iconColor} />
+                        <Text style={[styles.itemText, { color: theme.primaryText }]}>Settings</Text>
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.item}>
-                        <MaterialIcons style={styles.sideIcon} name="info" size={30} color="black" />
-                        <Text style={styles.itemText}>About</Text>
+                        <MaterialIcons style={styles.sideIcon} name="info" size={30} color={theme.iconColor} />
+                        <Text style={[styles.itemText, { color: theme.primaryText }]}>About</Text>
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.item}>
-                        <MaterialIcons style={styles.sideIcon} name="coffee" size={30} color="black" />
-                        <Text style={styles.itemText}>Buy me a coffee</Text>
+                        <MaterialIcons style={styles.sideIcon} name="coffee" size={30} color={theme.iconColor} />
+                        <Text style={[styles.itemText, { color: theme.primaryText }]}>Buy me a coffee</Text>
                     </TouchableOpacity>
                 </View>
             </Animated.View>
@@ -121,7 +123,6 @@ const styles = StyleSheet.create({
     },
     sidebar: {
         flex: 1,
-        backgroundColor: 'white',
         borderTopRightRadius: 20,
         borderBottomRightRadius: 20,
         padding: 20,
