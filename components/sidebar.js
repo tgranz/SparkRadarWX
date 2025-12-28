@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { openURL } from 'expo-linking';
 import { View, Text, TouchableOpacity, StyleSheet, Dimensions, Animated } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
@@ -38,6 +39,10 @@ export default function Sidebar({ onClose, onNavigate }) {
                 useNativeDriver: true,
             }),
         ]).start(() => onClose());
+    };
+
+    const handleBuyMeCoffee = () => {
+        openURL('https://buymeacoffee.com/nimbusapps');
     };
 
     return (
@@ -87,7 +92,7 @@ export default function Sidebar({ onClose, onNavigate }) {
                         <MaterialIcons style={styles.sideIcon} name="info" size={30} color={theme.iconColor} />
                         <Text style={[styles.itemText, { color: theme.primaryText }]}>About</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.item}>
+                    <TouchableOpacity style={styles.item} onPress={handleBuyMeCoffee}>
                         <MaterialIcons style={styles.sideIcon} name="coffee" size={30} color={theme.iconColor} />
                         <Text style={[styles.itemText, { color: theme.primaryText }]}>Buy me a coffee</Text>
                     </TouchableOpacity>

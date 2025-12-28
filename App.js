@@ -11,7 +11,7 @@
 // Imports
 import React, { useState, useEffect, useRef } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { Text, View, TouchableOpacity, Image, Animated } from 'react-native';
+import { Text, View, TouchableOpacity, Image, Animated, ScrollView, RefreshControl } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useFonts } from 'expo-font';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -20,6 +20,7 @@ import * as Location from 'expo-location';
 import { style, wxicons, getIconColor } from './style';
 import { useTheme } from './theme';
 import metarparser from './js/metarparser.js';
+import Toast from 'react-native-toast-message';
 
 
 // Components for main screen
@@ -105,6 +106,8 @@ export default function App() {
   const [data, setData] = useState([]);
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastRefreshTime, setLastRefreshTime] = useState(0);
   const FALLBACK_COORDS = { lat: 40.97959, lon: -85.17173 };
   const [coordinates, setCoordinates] = useState(FALLBACK_COORDS);
   const fadeAnim = useRef(new Animated.Value(1)).current;
@@ -121,14 +124,39 @@ export default function App() {
           if (owmData) setData(owmData);
           if (alertsToAdd) setAlerts(alertsToAdd);
           setLoading(false);
+          setRefreshing(false);
         });
         setData(parsedData);
         setLoading(false);
+        setRefreshing(false);
       })
       .catch((error) => {
         console.error(error);
         setLoading(false);
+        setRefreshing(false);
       });
+  };
+
+  // Pull to refresh handler
+  const onRefresh = () => {
+    const now = Date.now();
+    const timeSinceLastRefresh = now - lastRefreshTime;
+    const cooldownTime = 30000; // 30 seconds
+
+    if (timeSinceLastRefresh < cooldownTime) {
+      console.log(`Please wait ${Math.ceil((cooldownTime - timeSinceLastRefresh) / 1000)} seconds before refreshing again`);
+      Toast.show({
+        type: 'info',
+        text1: 'Please wait before refreshing again.',
+        position: 'bottom',
+        visibilityTime: 3000,
+      });
+      return;
+    }
+
+    setRefreshing(true);
+    setLastRefreshTime(now);
+    loadCurrentConditions(coordinates.lat, coordinates.lon);
   };
 
   useEffect(() => {
@@ -322,6 +350,18 @@ export default function App() {
           </View>
         </View>
 
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{ paddingBottom: 20 }}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={theme.iconColor}
+              colors={[theme.iconColor]}
+            />
+          }
+        >
 
         <View style={[styles.cardContainer, (open || locationOpen) && { pointerEvents: 'none' }, { marginTop: 20, paddingHorizontal: 60, flexDirection: 'row', alignItems: 'center' }]}>
           <Text style={[styles.wxicons, { color: getIconColor(data.WEATHER) }]}>{ getDataFromCondition(data.WEATHER).icon}</Text>
@@ -387,6 +427,10 @@ export default function App() {
             />
           </TouchableOpacity>
         </View>
+
+        </ScrollView>
+
+          <Toast />
 
         </LinearGradient>
       </Animated.View>
