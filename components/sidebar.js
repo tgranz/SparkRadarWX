@@ -80,15 +80,15 @@ export default function Sidebar({ onClose, onNavigate }) {
                         <MaterialIcons style={styles.sideIcon} name="radar" size={30} color={theme.iconColor} />
                         <Text style={[styles.itemText, { color: theme.primaryText }]}>Radar</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.item}>
+                    <TouchableOpacity style={styles.item} onPress={() => { onNavigate('radios'); }}>
                         <MaterialIcons style={styles.sideIcon} name="radio" size={30} color={theme.iconColor} />
                         <Text style={[styles.itemText, { color: theme.primaryText }]}>Radios</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.item}>
+                    <TouchableOpacity style={styles.item} onPress={() => { onNavigate('settings'); }}>
                         <MaterialIcons style={styles.sideIcon} name="settings" size={30} color={theme.iconColor} />
                         <Text style={[styles.itemText, { color: theme.primaryText }]}>Settings</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.item}>
+                    <TouchableOpacity style={styles.item} onPress={() => { onNavigate('about'); }}>
                         <MaterialIcons style={styles.sideIcon} name="info" size={30} color={theme.iconColor} />
                         <Text style={[styles.itemText, { color: theme.primaryText }]}>About</Text>
                     </TouchableOpacity>

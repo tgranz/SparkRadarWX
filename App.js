@@ -5,7 +5,7 @@
 
 // GIT SYNC CHECKLIST;
 // * Double check .gitignore
-// * Increment app.json version
+// * Increment package.json version
 
 
 // Imports
@@ -29,6 +29,9 @@ import LocationPicker from './components/locationpicker.js';
 import HourlyScreen from './components/hourly.js';
 import AlertsScreen from './components/alerts.js';
 import RadarScreen from './components/radar.js';
+import SettingsScreen from './components/settings.js';
+import AboutScreen from './components/about.js';
+import RadiosScreen from './components/radios.js';
 
 function getDataFromCondition(condition) {
   var id = 'sunny';
@@ -307,6 +310,39 @@ export default function App() {
       <View style={{ flex: 1 }}>
         <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
           <AlertsScreen onBack={() => navigateToScreen('home')} alerts={alerts} />
+        </Animated.View>
+      </View>
+    );
+  }
+
+  // Show settings screen if selected
+  if (currentScreen === 'settings') {
+    return (
+      <View style={{ flex: 1 }}>
+        <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
+          <SettingsScreen onBack={() => navigateToScreen('home')} />
+        </Animated.View>
+      </View>
+    );
+  }
+
+  // Show about screen if selected
+  if (currentScreen === 'about') {
+    return (
+      <View style={{ flex: 1 }}>
+        <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
+          <AboutScreen onBack={() => navigateToScreen('home')} />
+        </Animated.View>
+      </View>
+    );
+  }
+
+  // Show radios screen if selected
+  if (currentScreen === 'radios') {
+    return (
+      <View style={{ flex: 1 }}>
+        <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
+          <RadiosScreen onBack={() => navigateToScreen('home')} coordinates={coordinates} />
         </Animated.View>
       </View>
     );
