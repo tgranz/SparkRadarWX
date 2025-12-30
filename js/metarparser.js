@@ -85,20 +85,19 @@ function metarparser(data, lat, lon, callback) {
                     };
                     console.log("OpenWeatherMap data succeeded");
                     
-                    // Fetch alerts after getting OWM data
-                    fetch(`https://api.weather.gov/alerts/active?message_type=alert&point=${lat},${lon}`)
-                        .then((response) => response.json())
-                        .then((alertJson) => {
-                            if (callback) {
-                                callback(owmData, alertJson);
-                            }
-                        })
-                        .catch((error) => {
-                            console.error("Error fetching weather alerts:", error);
-                            if (callback) {
-                                callback(owmData, null);
-                            }
-                        });
+                    // Fetch Open-Meteo and alerts after getting OWM data
+                    console.log(`Fetching Open-Meteo forecast for lat=${lat}, lon=${lon}`);
+                    Promise.all([
+                        fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max,precipitation_probability_max&hourly=temperature_2m,relative_humidity_2m,cloud_cover,precipitation,snowfall,snow_depth,precipitation_probability,weather_code,cape,is_day&timezone=auto&forecast_days=14&wind_speed_unit=mph&temperature_unit=fahrenheit&precipitation_unit=inch`).then(r => r.json()).catch(e => { console.error("Open-Meteo error:", e); return null; }),
+                        fetch(`https://api.weather.gov/alerts/active?message_type=alert&point=${lat},${lon}`).then(r => r.json()).catch(e => { console.error("Alerts error:", e); return null; })
+                    ]).then(([forecastData, alertsData]) => {
+                        if (forecastData) {
+                            owmData.forecast = forecastData;
+                        }
+                        if (callback) {
+                            callback(owmData, alertsData);
+                        }
+                    });
                 })
                 .catch((error) => {
                     console.error("Error fetching OpenWeatherMap data:", error);
@@ -126,17 +125,27 @@ function metarparser(data, lat, lon, callback) {
     output.properties.WEATHER = output.properties.WEATHER == "No significant weather present at this time." ? 
         output.properties.SKY_CONDTN : output.properties.WEATHER;
 
-    // Once we have current conditions, we can now fetch active alerts
-    fetch(`https://api.weather.gov/alerts/active?message_type=alert&point=${lat},${lon}`)
-        .then((response) => response.json())
-        .then((json) => {
-            if (callback) {
-                callback(null, json);
-            }
-        })
-        .catch((error) => {
-            console.error("Error fetching weather alerts:", error);
-        });
+    // Now get forecasts from Open-Meteo
+    // https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max,precipitation_probability_max&hourly=temperature_2m,relative_humidity_2m,cloud_cover,precipitation,snowfall,snow_depth,precipitation_probability,weather_code,cape,is_day&timezone=auto&forecast_days=14&wind_speed_unit=mph&temperature_unit=fahrenheit&precipitation_unit=inch
+    console.log(`Fetching Open-Meteo forecast for lat=${lat}, lon=${lon}`);
+    const openMeteoUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max,precipitation_probability_max&hourly=temperature_2m,relative_humidity_2m,cloud_cover,precipitation,snowfall,snow_depth,precipitation_probability,weather_code,cape,is_day&timezone=auto&forecast_days=14&wind_speed_unit=mph&temperature_unit=fahrenheit&precipitation_unit=inch`;
+    
+    Promise.all([
+        fetch(openMeteoUrl).then(r => r.json()).catch(e => { console.error("Open-Meteo error:", e); return null; }),
+        fetch(`https://api.weather.gov/alerts/active?message_type=alert&point=${lat},${lon}`).then(r => r.json()).catch(e => { console.error("Alerts error:", e); return null; })
+    ]).then(([forecastData, alertsData]) => {
+        console.log("Open-Meteo response:", forecastData);
+        console.log("Alerts response:", alertsData);
+        
+        if (forecastData) {
+            output.properties.forecast = forecastData;
+        }
+        
+        console.log("Calling callback with data:", output.properties);
+        if (callback) {
+            callback(output.properties, alertsData);
+        }
+    });
 
     return output.properties;
 }

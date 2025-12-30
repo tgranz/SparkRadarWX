@@ -13,6 +13,7 @@
     "@react-native-community/blur": "^4.4.1",
     "dotenv": "^17.2.3",
     "expo": "~54.0.27",
+    "expo-av": "^16.0.8",
     "expo-blur": "~15.0.8",
     "expo-constants": "^18.0.11",
     "expo-font": "~14.0.10",

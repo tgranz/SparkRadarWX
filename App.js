@@ -122,9 +122,11 @@ export default function App() {
     fetch('https://services9.arcgis.com/RHVPKKiFTONKtxq3/arcgis/rest/services/NOAA_METAR_current_wind_speed_direction_v1/FeatureServer/0/query?where=1=1&outFields=*&f=geojson', { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36" })
       .then((response) => response.json())
       .then((json) => {
-        const parsedData = metarparser(json.features, lat, lon, (owmData, alertsToAdd) => {
-          // Callback: Update data when OpenWeatherMap fetch completes
-          if (owmData) setData(owmData);
+        const parsedData = metarparser(json.features, lat, lon, (updatedData, alertsToAdd) => {
+          // Callback: Update data when async fetches complete (OpenWeatherMap or forecast data)
+          // updatedData now includes: current conditions + forecast data from Open-Meteo (updatedData.forecast)
+          // alertsToAdd contains weather alerts from NWS
+          if (updatedData) setData(updatedData);
           if (alertsToAdd) setAlerts(alertsToAdd);
           setLoading(false);
           setRefreshing(false);
@@ -410,6 +412,30 @@ export default function App() {
         {alertelements.map((element, index) => (
           <React.Fragment key={index}>{element}</React.Fragment>
         ))}
+
+        <View style={[styles.cardContainer, (open || locationOpen) && { pointerEvents: 'none' }]}>
+          <View>
+            {data.forecast && data.forecast.hourly && data.forecast.hourly.precipitation_probability && (
+              <View style={{ width: '100%' }}>
+                <Text style={[styles.header, { fontSize: 18, marginBottom: 10 }]}>Precipitation next 24hr</Text>
+                <View style={{ width: '100%', flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-around', height: 50, flexWrap: 'nowrap' }}>
+                  {data.forecast.hourly.precipitation_probability.slice(0, 24).map((prob, index) => (
+                    <View key={index} style={{ alignItems: 'center', flex: 1, maxWidth: '4.16%' }}>
+                      <View 
+                        style={{ 
+                          width: '90%', 
+                          backgroundColor: '#27beff', 
+                          height: prob/2, 
+                          borderRadius: 10,
+                        }} 
+                      />
+                    </View>
+                  ))}
+                </View>
+              </View>
+            )}
+          </View>
+        </View>
 
         <View style={[styles.cardContainer, (open || locationOpen) && { pointerEvents: 'none' }]}>
           <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-around' }}>
