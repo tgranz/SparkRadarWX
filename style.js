@@ -74,6 +74,19 @@ function style(themeColors = {}) {
         cardTextContainer: {
             margin: 20,
         },
+        settingItem: { 
+            marginBottom: 5,
+            marginHorizontal: 10,
+            borderTopLeftRadius: 20,
+            borderTopRightRadius: 20,
+            borderBottomLeftRadius: 5,
+            borderBottomRightRadius: 5,
+            justifyContent: 'space-between',
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingHorizontal: 15,
+            paddingVertical: 10
+        }
     });
 }
 

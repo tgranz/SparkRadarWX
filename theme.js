@@ -33,10 +33,10 @@ export const lightTheme = {
 
 export const darkTheme = {
   // Background colors
-  gradientStart: '#1a1a2e',
-  gradientEnd: '#16213e',
-  cardBackground: '#2d2d2d',
-  sidebarBackground: '#2d2d2d',
+  gradientStart: '#000000',
+  gradientEnd: '#000000',
+  cardBackground: '#1e1e1e',
+  sidebarBackground: '#1e1e1e',
   backdrop: 'rgba(0, 0, 0, 0.7)',
   
   // Text colors
@@ -51,7 +51,7 @@ export const darkTheme = {
   shadowColor: '#000000',
   
   // Weather-specific colors
-  weatherIconPrimary: '#5aa3ff',
+  weatherIconPrimary: '#27beff',
   
   // Alert colors (same for both themes)
   alertTornado: '#da1990ff',

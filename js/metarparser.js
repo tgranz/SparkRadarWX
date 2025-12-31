@@ -79,8 +79,8 @@ function metarparser(data, lat, lon, callback) {
                         WIND_DIRECT: json.current.wind_deg,
                         WIND_SPEED: json.current.wind_speed,
                         PRESSURE: json.current.pressure,
-                        R_HUMIDITY: json.current.humidity,
-                        VISIBILITY: json.current.visibility,
+                        R_HUMIDITY: json.current.humidity > 100 ? 100 : json.current.humidity,
+                        VISIBILITY: json.current.visibility > 10000 ? 10000 : json.current.visibility,
                         SKY_CONDTN: json.current.weather[0].main,
                     };
                     console.log("OpenWeatherMap data succeeded");
@@ -106,7 +106,7 @@ function metarparser(data, lat, lon, callback) {
             return {
                 STATION_NAME: "Loading...",
                 ICAO: "...",
-                WEATHER: "Fetching data...",
+                WEATHER: "...",
                 TEMP: 0,
                 DEW_POINT: 0,
                 WIND_DIRECT: 0,

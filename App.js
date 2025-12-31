@@ -112,9 +112,10 @@ export default function App() {
   const [refreshing, setRefreshing] = useState(false);
   const [lastRefreshTime, setLastRefreshTime] = useState(0);
   const FALLBACK_COORDS = { lat: 40.97959, lon: -85.17173 };
-  const [coordinates, setCoordinates] = useState(FALLBACK_COORDS);
+  const [coordinates, setCoordinates] = useState({ lat: null, lon: null });
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const [locationName, setLocationName] = useState("Current Location");
+  const hasLoadedData = useRef(false);
 
   // Fetch and parse
   const loadCurrentConditions = (lat, lon) => {
@@ -186,8 +187,9 @@ export default function App() {
     
 
   useEffect(() => {
-    if (coordinates.lat !== null && coordinates.lon !== null) {
+    if (coordinates.lat !== null && coordinates.lon !== null && !hasLoadedData.current) {
       loadCurrentConditions(coordinates.lat, coordinates.lon);
+      hasLoadedData.current = true;
     }
   }, [coordinates]);
 
@@ -261,6 +263,18 @@ export default function App() {
         thisTextColor = "#000000";
       }
 
+      var formattedDate = "";
+      if (alert.properties.expires) {
+        var effectiveDate = new Date(alert.properties.expires);
+        const month = (effectiveDate.getMonth() + 1).toString().padStart(2, '0');
+        const day = effectiveDate.getDate().toString().padStart(2, '0');
+        let hours = effectiveDate.getHours();
+        const minutes = effectiveDate.getMinutes().toString().padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12 || 12;
+        formattedDate += `In effect until ${month}/${day} ${hours}:${minutes} ${ampm}`;
+      }
+
       alertelements = alertelements.concat(
         (
           <TouchableOpacity onPress={() => navigateToScreen('alerts')}>
@@ -269,7 +283,7 @@ export default function App() {
                 <MaterialIcons name="warning" size={32} color={thisTextColor} style={{ marginLeft: 0 }} />
                 <View style={{ marginLeft: 10 }}>
                   <Text style={[styles.header, { fontSize: 16, color: thisTextColor, textAlign: 'right' }]}>{alert.properties.event}</Text>
-                  <Text style={[styles.text, { color: thisTextColor, textAlign: 'right' }]}>In effect until 6:30PM 12/30</Text>
+                  <Text style={[styles.text, { color: thisTextColor, textAlign: 'right' }]}>{formattedDate}</Text>
                 </View>
               </View>
             </View>
@@ -297,7 +311,7 @@ export default function App() {
   // Show hourly screen if selected
   if (currentScreen === 'hourly') {
     return (
-      <View style={{ flex: 1 }}>
+      <View style={{ flex: 1, backgroundColor: theme.gradientStart }}>
         <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
           <HourlyScreen onMenuOpen={() => setOpen(true)} onBack={() => navigateToScreen('home')} data={data} />
         </Animated.View>
@@ -309,7 +323,7 @@ export default function App() {
   // Show alerts screen if selected
   if (currentScreen === 'alerts') {
     return (
-      <View style={{ flex: 1 }}>
+      <View style={{ flex: 1, backgroundColor: theme.gradientStart }}>
         <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
           <AlertsScreen onBack={() => navigateToScreen('home')} alerts={alerts} />
         </Animated.View>
@@ -320,7 +334,7 @@ export default function App() {
   // Show settings screen if selected
   if (currentScreen === 'settings') {
     return (
-      <View style={{ flex: 1 }}>
+      <View style={{ flex: 1, backgroundColor: theme.gradientStart }}>
         <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
           <SettingsScreen onBack={() => navigateToScreen('home')} />
         </Animated.View>
@@ -331,7 +345,7 @@ export default function App() {
   // Show about screen if selected
   if (currentScreen === 'about') {
     return (
-      <View style={{ flex: 1 }}>
+      <View style={{ flex: 1, backgroundColor: theme.gradientStart }}>
         <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
           <AboutScreen onBack={() => navigateToScreen('home')} />
         </Animated.View>
@@ -342,7 +356,7 @@ export default function App() {
   // Show radios screen if selected
   if (currentScreen === 'radios') {
     return (
-      <View style={{ flex: 1 }}>
+      <View style={{ flex: 1, backgroundColor: theme.gradientStart }}>
         <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
           <RadiosScreen onBack={() => navigateToScreen('home')} coordinates={coordinates} />
         </Animated.View>
@@ -353,7 +367,7 @@ export default function App() {
   // Show radar screen if selected
   if (currentScreen === 'radar') {
     return (
-      <View style={{ flex: 1 }}>
+      <View style={{ flex: 1, backgroundColor: theme.gradientStart }}>
         <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
           <RadarScreen onBack={() => navigateToScreen('home')} coordinates={coordinates} />
         </Animated.View>
@@ -362,7 +376,7 @@ export default function App() {
   }
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: theme.gradientStart }}>
       <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
         <LinearGradient colors={[theme.gradientStart, theme.gradientEnd]} style={[styles.gradientBackground, { zIndex: 1 }]} >
 
