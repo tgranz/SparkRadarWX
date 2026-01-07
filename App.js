@@ -1,5 +1,5 @@
 // SparkRadarWX
-// A FLOSS React Native weather app
+// A FOSS React Native weather app
 
 // Apache License 2.0
 
@@ -32,6 +32,7 @@ import RadarScreen from './components/radar.js';
 import SettingsScreen from './components/settings.js';
 import AboutScreen from './components/about.js';
 import RadiosScreen from './components/radios.js';
+
 
 function getDataFromCondition(condition) {
   var id = 'sunny';

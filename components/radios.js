@@ -3,7 +3,6 @@ import { View, Text, TouchableOpacity, ScrollView, BackHandler, ActivityIndicato
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Audio } from 'expo-av';
 import { style } from '../style';
 import { useTheme } from '../theme';
 import radio_streams from '../data/radio_streams.js';
