@@ -2,6 +2,7 @@ require('dotenv').config();
 
 module.exports = {
   expo: {
+    owner: "tgranz",
     name: "SparkRadarWX",
     slug: "SparkRadarWX",
     version: "0.1.2",
