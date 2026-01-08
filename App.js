@@ -17,7 +17,8 @@ import { useFonts } from 'expo-font';
 import { LinearGradient } from 'expo-linear-gradient';
 import { WebView } from 'react-native-webview';
 import * as Location from 'expo-location';
-import { style, wxicons, getIconColor } from './style';
+import Svg, { Circle } from 'react-native-svg';
+import { style, wxicons, getIconColor, getContrastYIQ } from './style';
 import { useTheme } from './theme';
 import metarparser from './js/metarparser.js';
 import Toast from 'react-native-toast-message';
@@ -109,6 +110,7 @@ export default function App() {
   const [currentScreen, setCurrentScreen] = useState('home');
   const [data, setData] = useState([]);
   const [alerts, setAlerts] = useState([]);
+  const [spcRisk, setSpcRisk] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [lastRefreshTime, setLastRefreshTime] = useState(0);
@@ -118,9 +120,95 @@ export default function App() {
   const [locationName, setLocationName] = useState("Current Location");
   const hasLoadedData = useRef(false);
 
+  const SPC_OUTLOOK_URL = 'https://www.spc.noaa.gov/products/outlook/day1otlk_cat.nolyr.geojson';
+
+  const pointInRing = (point, ring) => {
+    const [px, py] = point;
+    let inside = false;
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      const [xi, yi] = ring[i];
+      const [xj, yj] = ring[j];
+      const intersect = yi > py !== yj > py && px < ((xj - xi) * (py - yi)) / (yj - yi) + xi;
+      if (intersect) inside = !inside;
+    }
+    return inside;
+  };
+
+  const pointInPolygon = (point, polygon) => {
+    if (!Array.isArray(polygon) || polygon.length === 0) return false;
+    const inOuter = pointInRing(point, polygon[0]);
+    if (!inOuter) return false;
+    for (let i = 1; i < polygon.length; i++) {
+      if (pointInRing(point, polygon[i])) return false;
+    }
+    return true;
+  };
+
+  const loadSpcRisk = async (lat, lon) => {
+    if (lat == null || lon == null) return;
+    try {
+      const response = await fetch(SPC_OUTLOOK_URL);
+      const json = await response.json();
+      const point = [lon, lat];
+      let bestFeature = null;
+
+      json.features?.forEach((feature) => {
+        if (!feature?.geometry || !feature?.properties) return;
+        const { geometry, properties } = feature;
+
+        const checkPolygon = (polyCoords) => {
+          if (pointInPolygon(point, polyCoords)) {
+            if (!bestFeature || (properties.DN ?? 0) > (bestFeature.properties.DN ?? 0)) {
+              bestFeature = feature;
+            }
+          }
+        };
+
+        if (geometry.type === 'Polygon') {
+          checkPolygon(geometry.coordinates);
+        } else if (geometry.type === 'MultiPolygon') {
+          geometry.coordinates.forEach((poly) => checkPolygon(poly));
+        }
+      });
+
+      if (bestFeature) {
+        const { LABEL, LABEL2, fill, stroke } = bestFeature.properties;
+        setSpcRisk({ label: LABEL, description: LABEL2, fill, stroke });
+      } else {
+        setSpcRisk({ label: 'None', description: 'No SPC risk for this location today.', fill: '#3b9b5f', stroke: '#2f7b4c' });
+      }
+    } catch (err) {
+      console.error('Error fetching SPC outlook', err);
+      setSpcRisk({ label: 'Unavailable', description: 'SPC outlook could not be loaded.', fill: theme.cardBackground, stroke: theme.cardBackground });
+    }
+  };
+
+  const getSpcPercent = (label) => {
+    switch (label) {
+      case 'MRGL': return 0.2;
+      case 'SLGT': return 0.4;
+      case 'ENH': return 0.6;
+      case 'MDT': return 0.8;
+      case 'HIGH': return 1.0;
+      default: return 0;
+    }
+  };
+
+  const getSpcIndex = (label) => {
+    switch (label) {
+      case 'MRGL': return '1';
+      case 'SLGT': return '2';
+      case 'ENH': return '3';
+      case 'MDT': return '4';
+      case 'HIGH': return '5';
+      default: return '0';
+    }
+  };
+
   // Fetch and parse
   const loadCurrentConditions = (lat, lon) => {
     setLoading(true);
+    loadSpcRisk(lat, lon);
     fetch('https://services9.arcgis.com/RHVPKKiFTONKtxq3/arcgis/rest/services/NOAA_METAR_current_wind_speed_direction_v1/FeatureServer/0/query?where=1=1&outFields=*&f=geojson', { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36" })
       .then((response) => response.json())
       .then((json) => {
@@ -384,7 +472,7 @@ export default function App() {
         <StatusBar style="auto" />
         <View style={[styles.headerContainer, (open || locationOpen) && { pointerEvents: 'none' }]}>
           <View style={styles.side}>
-              <TouchableOpacity onPress={() => { setOpen(true) }}>
+            <TouchableOpacity onPress={() => { setOpen(true); }}>
               <MaterialIcons name="menu" size={35} color={theme.iconColor} />
             </TouchableOpacity>
           </View>
@@ -412,6 +500,7 @@ export default function App() {
               onRefresh={onRefresh}
               tintColor={theme.iconColor}
               colors={[theme.iconColor]}
+              progressBackgroundColor={theme.gradientEnd}
             />
           }
         >
@@ -419,40 +508,84 @@ export default function App() {
         <View style={[styles.cardContainer, (open || locationOpen) && { pointerEvents: 'none' }, { marginTop: 20, paddingHorizontal: 60, flexDirection: 'row', alignItems: 'center' }]}>
           <Text style={[styles.wxicons, { color: getIconColor(data.WEATHER) }]}>{ getDataFromCondition(data.WEATHER).icon}</Text>
           <View style={{ marginLeft: 10 }}>
-              <Text style={styles.header}>{getDataFromCondition(data.WEATHER).condition.charAt(0).toUpperCase() + getDataFromCondition(data.WEATHER).condition.slice(1)}</Text>
+            <Text style={styles.header}>{getDataFromCondition(data.WEATHER).condition.charAt(0).toUpperCase() + getDataFromCondition(data.WEATHER).condition.slice(1)}</Text>
             <Text style={[styles.header, { fontSize: 28 }]}>{Math.round(data.TEMP)}°</Text>
           </View>
         </View>
+
+        {(spcRisk && getSpcIndex(spcRisk.label) > 0) && (
+          <View style={[styles.cardContainer, (open || locationOpen) && { pointerEvents: 'none' }, { backgroundColor: spcRisk.fill, borderWidth: 1, borderColor: spcRisk.stroke || theme.cardBackground }]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', width: '100%', justifyContent: 'space-between' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <View>
+                  <Text style={[styles.header, { color: getContrastYIQ(spcRisk.fill), fontSize: 18 }]}>Severe Outlook</Text>
+                  <Text style={[styles.text, { color: getContrastYIQ(spcRisk.fill) }]}>{spcRisk.description} ({getSpcIndex(spcRisk.label)}/5)</Text>
+                </View>
+              </View>
+              <View style={{ width: 60, height: 60, justifyContent: 'center', alignItems: 'center' }}>
+                <Svg width={60} height={60}>
+                  <Circle
+                    cx={30}
+                    cy={30}
+                    r={26}
+                    stroke={spcRisk.stroke || theme.cardBackground}
+                    strokeWidth={6}
+                    fill="none"
+                    opacity={0.25}
+                  />
+                  <Circle
+                    cx={30}
+                    cy={30}
+                    r={26}
+                    stroke={spcRisk.stroke || theme.iconColor}
+                    strokeWidth={6}
+                    fill="none"
+                    strokeLinecap="round"
+                    strokeDasharray={`${2 * Math.PI * 26} ${2 * Math.PI * 26}`}
+                    strokeDashoffset={(1 - getSpcPercent(spcRisk.label)) * 2 * Math.PI * 26}
+                    rotation={-90}
+                    origin="30,30"
+                  />
+                </Svg>
+                <View style={{ position: 'absolute', justifyContent: 'center', alignItems: 'center' }}>
+                  <Text style={[styles.header, { color: getContrastYIQ(spcRisk.fill), fontSize: 18, fontWeight: 'bold' }]}>{getSpcIndex(spcRisk.label)}</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        )}
 
         {alertelements.map((element, index) => (
           <React.Fragment key={index}>{element}</React.Fragment>
         ))}
 
-        <View style={[styles.cardContainer, (open || locationOpen) && { pointerEvents: 'none' }]}>
-          <View>
-            {data.forecast && data.forecast.hourly && data.forecast.hourly.precipitation_probability && (
-              <View style={{ width: '100%' }}>
-                <Text style={[styles.header, { fontSize: 18, marginBottom: 10 }]}>Precipitation next 24hr</Text>
-                <View style={{ width: '100%', flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-around', height: 50, flexWrap: 'nowrap' }}>
-                  {data.forecast.hourly.precipitation_probability.slice(0, 24).map((prob, index) => (
-                    <View key={index} style={{ alignItems: 'center', flex: 1, maxWidth: '4.16%' }}>
-                      <View 
-                        style={{ 
-                          width: '90%', 
-                          backgroundColor: '#27beff', 
-                          height: prob/2, 
-                          borderRadius: 10,
-                        }} 
-                      />
-                    </View>
-                  ))}
+        {(data.forecast && data.forecast.hourly && data.forecast.hourly.precipitation_probability && data.forecast.hourly.precipitation_probability.slice(0, 24).some(prob => prob > 30)) && (
+          <View style={[styles.cardContainer, (open || locationOpen) && { pointerEvents: 'none' }]}>
+            <View>
+              {data.forecast && data.forecast.hourly && data.forecast.hourly.precipitation_probability && (
+                <View style={{ width: '100%' }}>
+                  <Text style={[styles.header, { fontSize: 18, marginBottom: 10 }]}>Precipitation next 24hr</Text>
+                  <View style={{ width: '100%', flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-around', height: 50, flexWrap: 'nowrap' }}>
+                    {data.forecast.hourly.precipitation_probability.slice(0, 24).map((prob, index) => (
+                      <View key={index} style={{ alignItems: 'center', flex: 1, maxWidth: '4.16%' }}>
+                        <View 
+                          style={{ 
+                            width: '90%', 
+                            backgroundColor: '#27beff', 
+                            height: prob/2, 
+                            borderRadius: 10,
+                          }} 
+                        />
+                      </View>
+                    ))}
+                  </View>
                 </View>
-              </View>
-            )}
+              )}
+            </View>
           </View>
-        </View>
+        )}
 
-        <View style={[styles.cardContainer, (open || locationOpen) && { pointerEvents: 'none' }]}>
+        <View style={[styles.cardContainer, (open || locationOpen) && { pointerEvents: 'none' }]}> 
           <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-around' }}>
             <View style={{ gap: 15 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -507,20 +640,23 @@ export default function App() {
 
         </ScrollView>
 
-          <Toast />
+        <Toast />
 
         </LinearGradient>
       </Animated.View>
 
       { open && <Sidebar onClose={() => setOpen(false)} onNavigate={navigateToScreen} /> }
-      {locationOpen && <LocationPicker
-        onClose={() => setLocationOpen(false)}
-        onLocationSelect={(lat, lon, name) => {
-          setCoordinates({ lat, lon });
-          setLocationOpen(false);
-          setLocationName(name.split(",")[0]);
-        }}
-      />}
+      {locationOpen && (
+        <LocationPicker
+          onClose={() => setLocationOpen(false)}
+          onLocationSelect={(lat, lon, name) => {
+            setCoordinates({ lat, lon });
+            loadCurrentConditions(lat, lon);
+            setLocationOpen(false);
+            setLocationName(name.split(",")[0]);
+          }}
+        />
+      )}
     </View>
   );
 }

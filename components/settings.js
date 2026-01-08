@@ -145,6 +145,9 @@ export default function SettingsScreen({ onBack }) {
         <View style={styles.side} />
       </View>
 
+      <Text style={styles.text}>*****  SETTINGS DO NOT WORK YET</Text>
+
+
       <ScrollView style={{ flex: 1, width: '100%' }} contentContainerStyle={{ paddingBottom: 20 }}>
         <Text style={[styles.text, { margin: 15, fontSize: 18, fontWeight: 'bold' }]}>Units</Text>
         <View style={[styles.card, styles.settingItem, { backgroundColor: theme.cardBackground }]}>
