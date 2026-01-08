@@ -59,7 +59,7 @@ export default function DailyScreen({ onMenuOpen, onBack, data, coordinates }) {
 
                 if (bestFeature) {
                     const { LABEL, LABEL2, fill, stroke } = bestFeature.properties;
-                    outlooks[i] = { label: LABEL, description: LABEL2, fill, stroke };
+                    outlooks[i] = { label: LABEL, description: LABEL2.replace(" Risk", ""), fill, stroke };
                 }
             } catch (err) {
                 console.error(`Error fetching SPC day ${i + 1} outlook:`, err);
@@ -213,7 +213,7 @@ export default function DailyScreen({ onMenuOpen, onBack, data, coordinates }) {
                             <View style={[localStyles.spcSection, { backgroundColor: day.spcOutlook.fill, borderColor: day.spcOutlook.stroke }]}>
                                 <MaterialIcons name="warning" size={18} color={getContrastYIQ(day.spcOutlook.fill)} />
                                 <Text style={[localStyles.spcText, { color: getContrastYIQ(day.spcOutlook.fill) }]}>
-                                    SPC Risk: {day.spcOutlook.description} ({getSpcIndex(day.spcOutlook.label)}/5)
+                                    Severe Risk: {day.spcOutlook.description} ({getSpcIndex(day.spcOutlook.label)}/5)
                                 </Text>
                             </View>
                         )}

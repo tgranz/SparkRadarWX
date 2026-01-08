@@ -22,6 +22,7 @@ import { style, wxicons, getIconColor, getContrastYIQ } from './style';
 import { useTheme } from './theme';
 import metarparser from './js/metarparser.js';
 import Toast from 'react-native-toast-message';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 
 // Components for main screen
@@ -92,7 +93,7 @@ function getDataFromCondition(condition) {
 }
 
 // Main app component
-export default function App() {
+function AppContent() {
   // Get current theme
   const { theme, isDark } = useTheme();
   
@@ -689,5 +690,13 @@ export default function App() {
         />
       )}
     </View>
+  );
+}
+
+export default function App() {
+  return (
+    <SafeAreaProvider>
+      <AppContent />
+    </SafeAreaProvider>
   );
 }

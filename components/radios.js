@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, ScrollView, BackHandler, ActivityIndicato
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useAudioPlayer } from 'expo-audio';
 import { style } from '../style';
 import { useTheme } from '../theme';
 import radio_streams from '../data/radio_streams.js';
@@ -13,9 +14,8 @@ export default function RadiosScreen({ onBack, coordinates }) {
   const { theme } = useTheme();
   const styles = style(theme);
   const [selectedRadio, setSelectedRadio] = useState(null);
-  const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const soundRef = useRef(null);
+  const player = useAudioPlayer(null);
 
   useEffect(() => {
     const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -25,55 +25,21 @@ export default function RadiosScreen({ onBack, coordinates }) {
 
     return () => {
       subscription.remove();
-      stopAudio();
+      if (player.playing) {
+        player.pause();
+      }
     };
   }, [onBack]);
-
-  useEffect(() => {
-    return () => {
-      stopAudio();
-    };
-  }, []);
-
-  const stopAudio = async () => {
-    if (soundRef.current) {
-      try {
-        await soundRef.current.stopAsync();
-        await soundRef.current.unloadAsync();
-        soundRef.current = null;
-      } catch (error) {
-        console.log('Error stopping audio:', error);
-      }
-    }
-    setIsPlaying(false);
-    setIsLoading(false);
-  };
 
   const playRadio = async (radio) => {
     try {
       setIsLoading(true);
       
-      // Stop current audio if playing
-      if (soundRef.current) {
-        await stopAudio();
-      }
-
-      // Set audio mode
-      await Audio.setAudioModeAsync({
-        staysActiveInBackground: true,
-        shouldDuckAndroid: false,
-      });
-
-      // Create and load new sound
-      const { sound } = await Audio.Sound.createAsync(
-        { uri: radio.radiourl },
-        { shouldPlay: true },
-        onPlaybackStatusUpdate
-      );
-
-      soundRef.current = sound;
+      // Replace the current source
+      player.replace(radio.radiourl);
+      player.play();
+      
       setSelectedRadio(radio);
-      setIsPlaying(true);
       setIsLoading(false);
     } catch (error) {
       console.log('Error playing radio:', error);
@@ -90,41 +56,33 @@ export default function RadiosScreen({ onBack, coordinates }) {
         visibilityTime: 3000,
       });
       setIsLoading(false);
-      setIsPlaying(false);
     }
   };
 
-  const togglePlayPause = async () => {
-    if (!soundRef.current || !selectedRadio) return;
+  const togglePlayPause = () => {
+    if (!selectedRadio) return;
 
     try {
-      if (isPlaying) {
-        await soundRef.current.pauseAsync();
-        setIsPlaying(false);
+      if (player.playing) {
+        player.pause();
       } else {
-        await soundRef.current.playAsync();
-        setIsPlaying(true);
+        player.play();
       }
     } catch (error) {
       console.log('Error toggling play/pause:', error);
     }
   };
 
-  const onPlaybackStatusUpdate = (status) => {
-    if (status.didJustFinish) {
-      setIsPlaying(false);
+  const stopAudio = () => {
+    if (player.playing) {
+      player.pause();
     }
-    if (status.error) {
-      console.log('Playback error:', status.error);
-      setIsPlaying(false);
-      setIsLoading(false);
-    }
+    setSelectedRadio(null);
   };
 
   const handleRadioPress = (radio) => {
-    if (selectedRadio?.key === radio.key && isPlaying) {
+    if (selectedRadio?.key === radio.key && player.playing) {
       stopAudio();
-      setSelectedRadio(null);
     } else {
       playRadio(radio);
     }
@@ -189,7 +147,7 @@ export default function RadiosScreen({ onBack, coordinates }) {
               </View>
               <View style={{ alignItems: 'flex-end', justifyContent: 'center' }}>
                 <MaterialIcons 
-                  name={selectedRadio?.key === radio.key && isPlaying ? "volume-up" : "radio"} 
+                  name={selectedRadio?.key === radio.key && player.playing ? "volume-up" : "radio"} 
                   size={24} 
                   color={theme.iconColor} 
                 />
@@ -229,12 +187,12 @@ export default function RadiosScreen({ onBack, coordinates }) {
               <>
                 <TouchableOpacity onPress={togglePlayPause} style={{ marginHorizontal: 10 }}>
                   <MaterialIcons 
-                    name={isPlaying ? "pause-circle-filled" : "play-circle-filled"} 
+                    name={player.playing ? "pause-circle-filled" : "play-circle-filled"} 
                     size={50} 
                     color={theme.iconColor} 
                   />
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => { stopAudio(); setSelectedRadio(null); }}>
+                <TouchableOpacity onPress={() => { stopAudio(); }}>
                   <MaterialIcons name="close" size={30} color={theme.iconColor} />
                 </TouchableOpacity>
               </>
