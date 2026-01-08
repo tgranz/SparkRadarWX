@@ -128,7 +128,7 @@ function metarparser(data, lat, lon, callback) {
     // Now get forecasts from Open-Meteo
     // https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max,precipitation_probability_max&hourly=temperature_2m,relative_humidity_2m,cloud_cover,precipitation,snowfall,snow_depth,precipitation_probability,weather_code,cape,is_day&timezone=auto&forecast_days=14&wind_speed_unit=mph&temperature_unit=fahrenheit&precipitation_unit=inch
     console.log(`Fetching Open-Meteo forecast for lat=${lat}, lon=${lon}`);
-    const openMeteoUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max,precipitation_probability_max&hourly=temperature_2m,relative_humidity_2m,cloud_cover,precipitation,snowfall,snow_depth,precipitation_probability,weather_code,cape,is_day&timezone=auto&forecast_days=14&wind_speed_unit=mph&temperature_unit=fahrenheit&precipitation_unit=inch`;
+    const openMeteoUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max,precipitation_probability_max&hourly=temperature_2m,relative_humidity_2m,cloud_cover,precipitation,snowfall,snow_depth,precipitation_probability,weather_code,cape,is_day&timezone=auto&forecast_days=7&wind_speed_unit=mph&temperature_unit=fahrenheit&precipitation_unit=inch`;
     
     Promise.all([
         fetch(openMeteoUrl).then(r => r.json()).catch(e => { console.error("Open-Meteo error:", e); return null; }),

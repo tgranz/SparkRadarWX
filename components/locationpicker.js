@@ -157,7 +157,7 @@ export default function Sidebar({ onClose, onLocationSelect }) {
             </Animated.View>
 
             <Animated.View style={[styles.drawerContainer, { transform: [{ translateY: slideAnim }] }]}>
-                <View style={[styles.drawer, { backgroundColor: theme.sidebarBackground }]}>
+                <View style={[StyleSheet.absoluteFill, styles.drawer, { backgroundColor: theme.cardBackground }]}>
                     {/*<View style={styles.handle} />*/}
                     
                     <View style={styles.header}>

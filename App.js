@@ -559,14 +559,27 @@ export default function App() {
           <React.Fragment key={index}>{element}</React.Fragment>
         ))}
 
-        {(data.forecast && data.forecast.hourly && data.forecast.hourly.precipitation_probability && data.forecast.hourly.precipitation_probability.slice(0, 24).some(prob => prob > 30)) && (
-          <View style={[styles.cardContainer, (open || locationOpen) && { pointerEvents: 'none' }]}>
-            <View>
-              {data.forecast && data.forecast.hourly && data.forecast.hourly.precipitation_probability && (
+        {(() => {
+          if (!data.forecast?.hourly?.precipitation_probability) return null;
+          const now = new Date();
+          let startIndex = 0;
+          for (let i = 0; i < data.forecast.hourly.time.length; i++) {
+            const forecastTime = new Date(data.forecast.hourly.time[i]);
+            if (forecastTime >= now) {
+              startIndex = i;
+              break;
+            }
+          }
+          const precipData = data.forecast.hourly.precipitation_probability.slice(startIndex, startIndex + 24);
+          if (!precipData.some(prob => prob > 30)) return null;
+          
+          return (
+            <View style={[styles.cardContainer, (open || locationOpen) && { pointerEvents: 'none' }]}>
+              <View>
                 <View style={{ width: '100%' }}>
                   <Text style={[styles.header, { fontSize: 18, marginBottom: 10 }]}>Precipitation next 24hr</Text>
                   <View style={{ width: '100%', flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-around', height: 50, flexWrap: 'nowrap' }}>
-                    {data.forecast.hourly.precipitation_probability.slice(0, 24).map((prob, index) => (
+                    {precipData.map((prob, index) => (
                       <View key={index} style={{ alignItems: 'center', flex: 1, maxWidth: '4.16%' }}>
                         <View 
                           style={{ 
@@ -579,11 +592,16 @@ export default function App() {
                       </View>
                     ))}
                   </View>
+                    <View style={{ display: 'flex', justifyContent: 'space-between', flexDirection: 'row', alignItems: 'center', marginTop: 10 }}>
+                      <Text style={styles.text}>{new Date().toLocaleTimeString('en-US', { hour: 'numeric', hour12: true })}</Text>
+                      <Text style={styles.text}>{new Date(new Date().getTime() + 12 * 60 * 60 * 1000).toLocaleTimeString('en-US', { hour: 'numeric', hour12: true })}</Text>
+                      <Text style={styles.text}>{new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toLocaleTimeString('en-US', { hour: 'numeric', hour12: true })}</Text>
+                    </View>
                 </View>
-              )}
+              </View>
             </View>
-          </View>
-        )}
+          );
+        })()}
 
         <View style={[styles.cardContainer, (open || locationOpen) && { pointerEvents: 'none' }]}> 
           <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-around' }}>

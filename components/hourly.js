@@ -19,22 +19,63 @@ export default function HourlyScreen({ onMenuOpen, onBack, data }) {
         return () => backHandler.remove();
     }, [onBack]);
     
+    // Weather code to condition mapping (WMO codes)
+    const getConditionFromCode = (code, isDay) => {
+        const timePrefix = isDay ? 'day' : 'night';
+        if (code === 0) return { icon: `${timePrefix}-clear`, condition: 'Clear' };
+        if (code === 1) return { icon: `${timePrefix}-clear`, condition: 'Mostly Clear' };
+        if (code === 2) return { icon: `${timePrefix}-partlycloudy`, condition: 'Partly Cloudy' };
+        if (code === 3) return { icon: `${timePrefix}-cloudy`, condition: 'Cloudy' };
+        if (code === 45 || code === 48) return { icon: `${timePrefix}-fog`, condition: 'Fog' };
+        if (code === 51 || code === 53 || code === 55) return { icon: `${timePrefix}-rain`, condition: 'Drizzle' };
+        if (code === 61 || code === 63 || code === 65) return { icon: `${timePrefix}-rain`, condition: 'Rain' };
+        if (code === 71 || code === 73 || code === 75) return { icon: `${timePrefix}-snow`, condition: 'Snow' };
+        if (code === 77) return { icon: `${timePrefix}-snow`, condition: 'Snow' };
+        if (code === 80 || code === 81 || code === 82) return { icon: `${timePrefix}-rain`, condition: 'Rain Showers' };
+        if (code === 85 || code === 86) return { icon: `${timePrefix}-snow`, condition: 'Snow Showers' };
+        if (code === 95) return { icon: `${timePrefix}-thunderstorm`, condition: 'Thunderstorm' };
+        if (code === 96 || code === 99) return { icon: `${timePrefix}-thunderstorm`, condition: 'Heavy Thunderstorms' };
+        return { icon: `${timePrefix}-clear`, condition: 'Unknown' };
+    };
 
-    // Sample hourly data - in production, this would come from an API
-    const hourlyData = [
-        { time: '12 PM', temp: 75, icon: 'day-clear', condition: 'Sunny', precipitation: 0 },
-        { time: '1 PM', temp: 76, icon: 'day-clear', condition: 'Sunny', precipitation: 0 },
-        { time: '2 PM', temp: 77, icon: 'day-partlycloudy', condition: 'Partly Cloudy', precipitation: 10 },
-        { time: '3 PM', temp: 76, icon: 'day-partlycloudy', condition: 'Partly Cloudy', precipitation: 15 },
-        { time: '4 PM', temp: 75, icon: 'day-cloudy', condition: 'Cloudy', precipitation: 20 },
-        { time: '5 PM', temp: 73, icon: 'day-cloudy', condition: 'Cloudy', precipitation: 30 },
-        { time: '6 PM', temp: 71, icon: 'day-rain', condition: 'Rain', precipitation: 60 },
-        { time: '7 PM', temp: 69, icon: 'night-thunderstorm', condition: 'Storms', precipitation: 70 },
-        { time: '8 PM', temp: 68, icon: 'night-cloudy', condition: 'Cloudy', precipitation: 40 },
-        { time: '9 PM', temp: 67, icon: 'night-partlycloudy', condition: 'Partly Cloudy', precipitation: 20 },
-        { time: '10 PM', temp: 66, icon: 'night-clear', condition: 'Clear', precipitation: 5 },
-        { time: '11 PM', temp: 65, icon: 'night-clear', condition: 'Clear', precipitation: 0 },
-    ];
+    // Build hourly data from Open-Meteo forecast
+    const hourlyData = [];
+    if (data.forecast && data.forecast.hourly) {
+        const forecast = data.forecast.hourly;
+        const hoursToShow = 164; // Show next 164 hours
+        const now = new Date();
+        
+        // Find the first forecast entry that is current or in the future
+        let startIndex = 0;
+        for (let i = 0; i < forecast.time.length; i++) {
+            const forecastTime = new Date(forecast.time[i]);
+            if (forecastTime >= now) {
+                startIndex = i;
+                break;
+            }
+        }
+        
+        // Build hourly data starting from the first future hour
+        for (let i = startIndex; i < Math.min(startIndex + hoursToShow, forecast.time.length); i++) {
+            const forecastTime = new Date(forecast.time[i]);
+            const hour = forecastTime.getHours();
+            const ampm = hour >= 12 ? 'PM' : 'AM';
+            const displayHour = hour % 12 || 12;
+            
+            const weatherInfo = getConditionFromCode(forecast.weather_code[i], forecast.is_day[i]);
+            
+            hourlyData.push({
+                time: `${displayHour} ${ampm}`,
+                day: forecastTime.toLocaleDateString('en-US', { weekday: 'short' }),
+                temp: Math.round(forecast.temperature_2m[i]),
+                icon: weatherInfo.icon,
+                condition: weatherInfo.condition,
+                precipitation: forecast.precipitation_probability[i] || 0,
+                humidity: forecast.relative_humidity_2m[i] || 0,
+                cloudCover: forecast.cloud_cover[i] || 0,
+            });
+        }
+    }
 
     return (
         <LinearGradient colors={[theme.gradientStart, theme.gradientEnd]} style={[styles.gradientBackground, { zIndex: 1 }]}>
@@ -62,6 +103,7 @@ export default function HourlyScreen({ onMenuOpen, onBack, data }) {
                 {hourlyData.map((hour, index) => (
                     <View key={index} style={[localStyles.hourCard, { backgroundColor: theme.cardBackground }]}>
                         <View style={localStyles.timeSection}>
+                            <Text style={[localStyles.timeText, { color: theme.primaryText }]}>{hour.day}</Text>
                             <Text style={[localStyles.timeText, { color: theme.primaryText }]}>{hour.time}</Text>
                         </View>
 
