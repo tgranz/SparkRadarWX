@@ -28,6 +28,7 @@ import Toast from 'react-native-toast-message';
 import Sidebar from './components/sidebar.js';
 import LocationPicker from './components/locationpicker.js';
 import HourlyScreen from './components/hourly.js';
+import DailyScreen from './components/daily.js';
 import AlertsScreen from './components/alerts.js';
 import RadarScreen from './components/radar.js';
 import SettingsScreen from './components/settings.js';
@@ -403,6 +404,18 @@ export default function App() {
       <View style={{ flex: 1, backgroundColor: theme.gradientStart }}>
         <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
           <HourlyScreen onMenuOpen={() => setOpen(true)} onBack={() => navigateToScreen('home')} data={data} />
+        </Animated.View>
+        { open && <Sidebar onClose={() => setOpen(false)} onNavigate={navigateToScreen} /> }
+      </View>
+    );
+  }
+
+  // Show daily screen if selected
+  if (currentScreen === 'daily') {
+    return (
+      <View style={{ flex: 1, backgroundColor: theme.gradientStart }}>
+        <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
+          <DailyScreen onMenuOpen={() => setOpen(true)} onBack={() => navigateToScreen('home')} data={data} coordinates={coordinates} />
         </Animated.View>
         { open && <Sidebar onClose={() => setOpen(false)} onNavigate={navigateToScreen} /> }
       </View>

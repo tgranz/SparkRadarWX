@@ -72,7 +72,7 @@ export default function Sidebar({ onClose, onNavigate }) {
                         <MaterialIcons style={styles.sideIcon} name="timer" size={30} color={theme.iconColor} />
                         <Text style={[styles.itemText, { color: theme.primaryText }]}>Hourly</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.item}>
+                    <TouchableOpacity style={styles.item} onPress={() => { onNavigate('daily'); }}>
                         <MaterialIcons style={styles.sideIcon} name="calendar-month" size={30} color={theme.iconColor} />
                         <Text style={[styles.itemText, { color: theme.primaryText }]}>Daily</Text>
                     </TouchableOpacity>
