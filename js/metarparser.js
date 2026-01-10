@@ -42,6 +42,7 @@ function metarparser(data, lat, lon, callback) {
         try {
             if (output.properties.WEATHER.toLowerCase().includes("automated observation")) throw new Error;
             console.log("First METAR data valid.");
+            output.properties.source = "Source: " + output.properties.ICAO + " weather station";
         } catch {
             // Delete bad data
             console.log("Bad data from nearest METAR", output.properties.STATION + ". Trying another...")
@@ -58,15 +59,116 @@ function metarparser(data, lat, lon, callback) {
         }
     }
 
-    // If distance is too large, or data is still bad, return openWeatherMap data
+    // If distance is too large, or data is still bad, use openWeatherMap data
     const isAutomatedObs = (
         output && output.properties && typeof output.properties.WEATHER === 'string' &&
         output.properties.WEATHER.toLowerCase().includes("automated observation")
     );
+    
+    // Function to fetch forecast and call callback
+    const fetchForecastAndCallback = (baseData) => {
+        console.log(`Fetching NWS forecast for lat=${lat}, lon=${lon}`);
+        
+        Promise.all([
+            fetch(`https://forecast.weather.gov/MapClick.php?lon=${lon}&lat=${lat}&FcstType=json`).then(r => r.json()).catch(e => { console.warn("NWS error:", e); return null; }),
+            fetch(`https://api.weather.gov/alerts/active?message_type=alert&point=${lat},${lon}`).then(r => r.json()).catch(e => { console.warn("Alerts error:", e); return null; })
+        ]).then(([forecastData, alertsData]) => {
+            
+            if (forecastData) {
+                console.log("NWS response received.");
+                baseData.forecast = forecastData;
+                if (callback) {
+                    callback(baseData, alertsData);
+                }
+            } else {
+                // NWS failed, try OpenWeatherMap forecast as fallback
+                console.log("NWS forecast failed, falling back to OpenWeatherMap forecast");
+                if (OPENWEATHER_API_KEY) {
+                    fetch(`https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&appid=${OPENWEATHER_API_KEY}&units=imperial`)
+                        .then(r => r.json())
+                        .then(owmData => {
+                            // Convert OWM forecast to NWS-like format
+                            const nwsLikeForecast = convertOWMToNWSFormat(owmData);
+                            baseData.forecast = nwsLikeForecast;
+                            console.log("OpenWeatherMap forecast data succeeded");
+                            if (callback) {
+                                callback(baseData, alertsData);
+                            }
+                        })
+                        .catch(err => {
+                            console.error("OpenWeatherMap forecast error:", err);
+                            if (callback) {
+                                callback(baseData, alertsData);
+                            }
+                        });
+                } else {
+                    console.warn("OpenWeatherMap API key not configured, cannot fetch fallback forecast");
+                    if (callback) {
+                        callback(baseData, alertsData);
+                    }
+                }
+            }
+        }).catch(err => {
+            console.error("Promise.all error:", err);
+            if (callback) {
+                callback(baseData, null);
+            }
+        });
+    };
+    
+    // Convert OpenWeatherMap forecast to NWS-compatible format
+    const convertOWMToNWSFormat = (owmData) => {
+        const time = {
+            layoutKey: "owm-daily",
+            startPeriodName: [],
+            startValidTime: [],
+            tempLabel: []
+        };
+        
+        const data = {
+            temperature: [],
+            pop: [],
+            weather: [],
+            iconLink: [],
+            text: []
+        };
+        
+        // Convert daily forecast
+        if (owmData.daily) {
+            owmData.daily.forEach((day, index) => {
+                const date = new Date(day.dt * 1000);
+                const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
+                
+                // Day period
+                time.startPeriodName.push(dayName);
+                time.startValidTime.push(date.toISOString());
+                time.tempLabel.push("High");
+                data.temperature.push(Math.round(day.temp.max).toString());
+                data.pop.push(day.pop ? Math.round(day.pop * 100).toString() : "0");
+                data.weather.push(day.weather[0].main);
+                data.iconLink.push(`https://openweathermap.org/img/wn/${day.weather[0].icon}@2x.png`);
+                data.text.push(day.weather[0].description);
+                
+                // Night period
+                time.startPeriodName.push(dayName + " Night");
+                time.startValidTime.push(date.toISOString());
+                time.tempLabel.push("Low");
+                data.temperature.push(Math.round(day.temp.min).toString());
+                data.pop.push(day.pop ? Math.round(day.pop * 100).toString() : "0");
+                data.weather.push(day.weather[0].main);
+                data.iconLink.push(`https://openweathermap.org/img/wn/${day.weather[0].icon}@2x.png`);
+                data.text.push(day.weather[0].description);
+            });
+        }
+        
+        return { time, data };
+    };
+    
     if (output.DISTANCE > 15 || isAutomatedObs) {
-
-        console.log("Bad data from second nearest METAR", output.properties.STATION + ". Trying OpenWeatherMap...");
-        if (OPENWEATHER_API_KEY) { // Remove negation to enable OWM fetch, this is used to prevent exceeding rate limit
+        console.log("Bad data from second nearest METAR", output.properties.STATION + ". Trying NWS...");
+        
+        // Use NWS current observation data if available
+        if (OPENWEATHER_API_KEY) {
             fetch(`https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&appid=${OPENWEATHER_API_KEY}&units=imperial`)
                 .then((response) => response.json())
                 .then((json) => {
@@ -82,70 +184,48 @@ function metarparser(data, lat, lon, callback) {
                         R_HUMIDITY: json.current.humidity > 100 ? 100 : json.current.humidity,
                         VISIBILITY: json.current.visibility > 10000 ? 10000 : json.current.visibility,
                         SKY_CONDTN: json.current.weather[0].main,
+                        source: "Source: OpenWeatherMap"
                     };
                     console.log("OpenWeatherMap data succeeded");
-                    
-                    // Fetch Open-Meteo and alerts after getting OWM data
-                    console.log(`Fetching Open-Meteo forecast for lat=${lat}, lon=${lon}`);
-                    Promise.all([
-                        fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max,precipitation_probability_max&hourly=temperature_2m,relative_humidity_2m,cloud_cover,precipitation,snowfall,snow_depth,precipitation_probability,weather_code,cape,is_day&timezone=auto&forecast_days=14&wind_speed_unit=mph&temperature_unit=fahrenheit&precipitation_unit=inch`).then(r => r.json()).catch(e => { console.error("Open-Meteo error:", e); return null; }),
-                        fetch(`https://api.weather.gov/alerts/active?message_type=alert&point=${lat},${lon}`).then(r => r.json()).catch(e => { console.error("Alerts error:", e); return null; })
-                    ]).then(([forecastData, alertsData]) => {
-                        if (forecastData) {
-                            owmData.forecast = forecastData;
-                        }
-                        if (callback) {
-                            callback(owmData, alertsData);
-                        }
-                    });
+                    fetchForecastAndCallback(owmData);
                 })
                 .catch((error) => {
                     console.error("Error fetching OpenWeatherMap data:", error);
+                    // Fallback to METAR data even if OWM fails
+                    fetchForecastAndCallback(output.properties);
                 });
-            // Return placeholder while fetching
-            return {
-                STATION_NAME: "Loading...",
-                ICAO: "...",
-                WEATHER: "...",
-                TEMP: 0,
-                DEW_POINT: 0,
-                WIND_DIRECT: 0,
-                WIND_SPEED: 0,
-                PRESSURE: 0,
-                R_HUMIDITY: 0,
-                VISIBILITY: 0,
-                SKY_CONDTN: "Loading"
-            };
         } else {
             console.warn("OpenWeatherMap API key not configured");
+            // Fallback to METAR data
+            fetchForecastAndCallback(output.properties);
         }
+
+        // Return placeholder while fetching
+        return {
+            STATION_NAME: "Loading...",
+            ICAO: "...",
+            WEATHER: "...",
+            TEMP: 0,
+            DEW_POINT: 0,
+            WIND_DIRECT: 0,
+            WIND_SPEED: 0,
+            PRESSURE: 0,
+            R_HUMIDITY: 0,
+            VISIBILITY: 0,
+            SKY_CONDTN: "Loading",
+            source: "..."
+        };
+        
+    } else {
+        // Good METAR data, use it
+        output.properties.WEATHER = output.properties.WEATHER == "No significant weather present at this time." ? 
+            output.properties.SKY_CONDTN : output.properties.WEATHER;
+
+        output.properties.source = "Source: " + output.properties.ICAO + " weather station";
+        console.log("Using METAR data from", output.properties.ICAO);
+        
+        fetchForecastAndCallback(output.properties);
     }
-
-    // Formatting
-    output.properties.WEATHER = output.properties.WEATHER == "No significant weather present at this time." ? 
-        output.properties.SKY_CONDTN : output.properties.WEATHER;
-
-    // Now get forecasts from Open-Meteo
-    // https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max,precipitation_probability_max&hourly=temperature_2m,relative_humidity_2m,cloud_cover,precipitation,snowfall,snow_depth,precipitation_probability,weather_code,cape,is_day&timezone=auto&forecast_days=14&wind_speed_unit=mph&temperature_unit=fahrenheit&precipitation_unit=inch
-    console.log(`Fetching Open-Meteo forecast for lat=${lat}, lon=${lon}`);
-    const openMeteoUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max,precipitation_probability_max&hourly=temperature_2m,relative_humidity_2m,cloud_cover,precipitation,snowfall,snow_depth,precipitation_probability,weather_code,cape,is_day&timezone=auto&forecast_days=7&wind_speed_unit=mph&temperature_unit=fahrenheit&precipitation_unit=inch`;
-    
-    Promise.all([
-        fetch(openMeteoUrl).then(r => r.json()).catch(e => { console.error("Open-Meteo error:", e); return null; }),
-        fetch(`https://api.weather.gov/alerts/active?message_type=alert&point=${lat},${lon}`).then(r => r.json()).catch(e => { console.error("Alerts error:", e); return null; })
-    ]).then(([forecastData, alertsData]) => {
-        console.log("Open-Meteo response:", forecastData);
-        console.log("Alerts response:", alertsData);
-        
-        if (forecastData) {
-            output.properties.forecast = forecastData;
-        }
-        
-        console.log("Calling callback with data:", output.properties);
-        if (callback) {
-            callback(output.properties, alertsData);
-        }
-    });
 
     return output.properties;
 }

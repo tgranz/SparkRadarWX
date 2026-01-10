@@ -3,15 +3,16 @@ import { View, Text, TouchableOpacity, ScrollView, BackHandler } from 'react-nat
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { MaterialIcons } from '@expo/vector-icons';
+import Constants from 'expo-constants';
 import { style } from '../style';
 import { useTheme } from '../theme';
-const version = require('../package.json').version;
-const dependencies = Object.keys(require('../package.json').dependencies);
-const reactversion = require('../package.json').dependencies.react;
 
 export default function AboutScreen({ onBack }) {
   const { theme } = useTheme();
   const styles = style(theme);
+  const version = Constants.expoConfig?.version || require('../package.json').version;
+  const dependencies = Object.keys(require('../package.json').dependencies);
+  const reactversion = require('../package.json').dependencies.react;
 
   useEffect(() => {
     const subscription = BackHandler.addEventListener('hardwareBackPress', () => {

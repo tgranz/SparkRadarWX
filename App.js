@@ -210,6 +210,13 @@ function AppContent() {
   // Fetch and parse
   const loadCurrentConditions = (lat, lon) => {
     setLoading(true);
+    const startTime = Date.now();
+    
+    // Set a timeout to hide loading spinner after 3 seconds
+    const loadingTimeout = setTimeout(() => {
+      setLoading(false);
+    }, 3000);
+    
     loadSpcRisk(lat, lon);
     fetch('https://services9.arcgis.com/RHVPKKiFTONKtxq3/arcgis/rest/services/NOAA_METAR_current_wind_speed_direction_v1/FeatureServer/0/query?where=1=1&outFields=*&f=geojson', { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36" })
       .then((response) => response.json())
@@ -220,19 +227,31 @@ function AppContent() {
           // alertsToAdd contains weather alerts from NWS
           if (updatedData) setData(updatedData);
           if (alertsToAdd) setAlerts(alertsToAdd);
-          setLoading(false);
+          // Don't set loading to false here - let the timeout handle it
           setRefreshing(false);
         });
         setData(parsedData);
-        setLoading(false);
+        // Only clear loading immediately if data loads before 3 seconds
+        const elapsedTime = Date.now() - startTime;
+        if (elapsedTime >= 3000) {
+          setLoading(false);
+        }
         setRefreshing(false);
       })
       .catch((error) => {
         console.error(error);
+        clearTimeout(loadingTimeout);
         setLoading(false);
         setRefreshing(false);
       });
   };
+
+  // Function to convert degrees to cardinal direction
+  function degToCardinal(deg) {
+    const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+    const index = Math.floor((deg / 22.5) + 0.5) % 16;
+    return directions[index];
+  }
 
   // Pull to refresh handler
   const onRefresh = () => {
@@ -634,6 +653,13 @@ function AppContent() {
                   <Text style={[styles.text, { fontWeight: 'bold' }]}>{data.PRESSURE} mb</Text>
                 </View>
               </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <MaterialIcons name="speed" size={24} color={theme.weatherIconPrimary} />
+                <View>
+                  <Text style={styles.text}>Wind Speed</Text>
+                  <Text style={[styles.text, { fontWeight: 'bold' }]}>{data.WIND_SPEED} mph</Text>
+                </View>
+              </View>
             </View>
             <View style={{ gap: 15 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -648,6 +674,13 @@ function AppContent() {
                 <View>
                   <Text style={styles.text}>Visibility</Text>
                   <Text style={[styles.text, { fontWeight: 'bold' }]}>{Math.round(data.VISIBILITY / 1000)} mi</Text>
+                </View>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <MaterialIcons name="wind-power" size={24} color={theme.weatherIconPrimary} />
+                <View>
+                  <Text style={styles.text}>Wind Direction</Text>
+                  <Text style={[styles.text, { fontWeight: 'bold' }]}>{ degToCardinal(Math.round(data.WIND_DIRECT))} ({Math.round(data.WIND_DIRECT)}°)</Text>
                 </View>
               </View>
             </View>
@@ -669,6 +702,8 @@ function AppContent() {
             />
           </TouchableOpacity>
         </View>
+
+        <Text style={[ styles.text, { textAlign: 'center', marginTop: 10 }]}>{data.source}</Text>
 
         </ScrollView>
 

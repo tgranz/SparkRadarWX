@@ -15,7 +15,7 @@ export default function RadiosScreen({ onBack, coordinates }) {
   const styles = style(theme);
   const [selectedRadio, setSelectedRadio] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const player = useAudioPlayer(null);
+  const player = useAudioPlayer();
 
   useEffect(() => {
     const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -25,8 +25,12 @@ export default function RadiosScreen({ onBack, coordinates }) {
 
     return () => {
       subscription.remove();
-      if (player.playing) {
-        player.pause();
+      try {
+        if (player && player.playing) {
+          player.pause();
+        }
+      } catch (error) {
+        console.log('Error pausing player on unmount:', error);
       }
     };
   }, [onBack]);
@@ -36,8 +40,10 @@ export default function RadiosScreen({ onBack, coordinates }) {
       setIsLoading(true);
       
       // Replace the current source
-      player.replace(radio.radiourl);
-      player.play();
+      if (player) {
+        player.replace(radio.radiourl);
+        player.play();
+      }
       
       setSelectedRadio(radio);
       setIsLoading(false);
@@ -60,7 +66,7 @@ export default function RadiosScreen({ onBack, coordinates }) {
   };
 
   const togglePlayPause = () => {
-    if (!selectedRadio) return;
+    if (!selectedRadio || !player) return;
 
     try {
       if (player.playing) {
@@ -74,10 +80,15 @@ export default function RadiosScreen({ onBack, coordinates }) {
   };
 
   const stopAudio = () => {
-    if (player.playing) {
-      player.pause();
+    try {
+      if (player && player.playing) {
+        player.pause();
+      }
+      setSelectedRadio(null);
+    } catch (error) {
+      console.log('Error stopping audio:', error);
+      setSelectedRadio(null);
     }
-    setSelectedRadio(null);
   };
 
   const handleRadioPress = (radio) => {

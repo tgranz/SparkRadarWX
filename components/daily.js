@@ -102,48 +102,113 @@ export default function DailyScreen({ onMenuOpen, onBack, data, coordinates }) {
         }
     };
     
-    // Weather code to condition mapping (WMO codes)
-    const getConditionFromCode = (code) => {
-        if (code === 0) return { icon: 'day-clear', condition: 'Clear' };
-        if (code === 1) return { icon: 'day-clear', condition: 'Mostly Clear' };
-        if (code === 2) return { icon: 'day-partlycloudy', condition: 'Partly Cloudy' };
-        if (code === 3) return { icon: 'day-cloudy', condition: 'Cloudy' };
-        if (code === 45 || code === 48) return { icon: 'day-fog', condition: 'Fog' };
-        if (code === 51 || code === 53 || code === 55) return { icon: 'day-rain', condition: 'Drizzle' };
-        if (code === 61 || code === 63 || code === 65) return { icon: 'day-rain', condition: 'Rain' };
-        if (code === 71 || code === 73 || code === 75) return { icon: 'day-snow', condition: 'Snow' };
-        if (code === 77) return { icon: 'day-snow', condition: 'Snow' };
-        if (code === 80 || code === 81 || code === 82) return { icon: 'day-rain', condition: 'Rain Showers' };
-        if (code === 85 || code === 86) return { icon: 'day-snow', condition: 'Snow Showers' };
-        if (code === 95) return { icon: 'day-thunderstorm', condition: 'Thunderstorm' };
-        if (code === 96 || code === 99) return { icon: 'day-thunderstorm', condition: 'Heavy Thunderstorms' };
-        return { icon: 'day-clear', condition: 'Unknown' };
+    // Weather text to condition mapping
+    const getConditionFromText = (weatherText, dayOrNight='day') => {
+        const text = (weatherText || '').toLowerCase();
+        
+        if (text.includes('rain') && text.includes('snow')) return { icon: `${dayOrNight}-rain`, condition: 'Wintry Mix' };
+        if (text.includes('thunderstorm')) return { icon: `${dayOrNight}-thunderstorm`, condition: 'Thunderstorm' };
+        if (text.includes('rain')) return { icon: `${dayOrNight}-rain`, condition: 'Rain' };
+        if (text.includes('snow')) return { icon: `${dayOrNight}-snow`, condition: 'Snow' };
+        if (text.includes('sleet')) return { icon: `${dayOrNight}-rain`, condition: 'Sleet' };
+        if (text.includes('freezing')) return { icon: `${dayOrNight}-rain`, condition: 'Freezing Rain' };
+        if (text.includes('fog') || text.includes('mist')) return { icon: `${dayOrNight}-fog`, condition: 'Fog' };
+        if (text.includes('drizzle')) return { icon: `${dayOrNight}-rain`, condition: 'Drizzle' };
+        if (text.includes('cloudy') || text.includes('overcast')) return { icon: `${dayOrNight}-cloudy`, condition: 'Cloudy' };
+        if (text.includes('partly') || text.includes('mostly cloudy')) return { icon: `${dayOrNight}-partlycloudy`, condition: 'Partly Cloudy' };
+        if (text.includes('mostly sunny') || text.includes('sunny') || text.includes('clear')) return { icon: `${dayOrNight}-clear`, condition: 'Clear' };
+        
+        return { icon: `${dayOrNight}-clear`, condition: 'Clear' };
     };
 
-    // Build daily data from Open-Meteo forecast
+    // Build daily data from NWS forecast
+    // NWS forecast has a day AND night period
     const dailyData = [];
-    if (data.forecast && data.forecast.daily) {
-        const forecast = data.forecast.daily;
-        const daysToShow = Math.min(7, forecast.time.length);
+    
+    // Safety check: ensure data structure exists before processing
+    if (!data || !data.forecast || !data.forecast.time || !data.forecast.data) {
+        return (
+            <LinearGradient colors={[theme.gradientStart, theme.gradientEnd]} style={[styles.gradientBackground, { zIndex: 1 }]}>
+                <StatusBar style="auto" />
+                <View style={[styles.headerContainer]}>
+                    <View style={styles.side}>
+                        <TouchableOpacity onPress={onMenuOpen}>
+                            <MaterialIcons name="menu" size={35} color={theme.iconColor} />
+                        </TouchableOpacity>
+                    </View>
+                    <View style={styles.titleContainer}>
+                        <Text style={styles.header}>Daily Forecast</Text>
+                    </View>
+                    <View style={styles.side} />
+                </View>
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                    <Text style={{ color: theme.primaryText }}>Loading forecast data...</Text>
+                </View>
+            </LinearGradient>
+        );
+    }
+    
+    const forecasttime = data.forecast.time;
+    const forecast = data.forecast.data;
+    const daysToShow = forecasttime.startValidTime.length;
+
+    var thisHigh = null;
+    var thisLow = null;
+    var thisConditionDay = null;
+    var thisConditionNight = null;
+    var iconDay = null;
+    var iconNight = null;
+    var popDay = null;
+    var popNight = null;
+    var dayIndex = 0;
+    
+    for (let i = 0; i < daysToShow; i++) {
+        // Use tempLabel to determine if this is a High or Low period
+        const isHighPeriod = forecasttime.tempLabel[i] === "High";
         
-        for (let i = 0; i < daysToShow; i++) {
-            const date = new Date(forecast.time[i]);
-            const weatherInfo = getConditionFromCode(forecast.weather_code[i]);
-            
-            dailyData.push({
-                date: date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
-                dayName: date.toLocaleDateString('en-US', { weekday: 'long' }),
-                tempHigh: Math.round(forecast.temperature_2m_max[i]),
-                tempLow: Math.round(forecast.temperature_2m_min[i]),
-                icon: weatherInfo.icon,
-                condition: weatherInfo.condition,
-                precipitation: forecast.precipitation_probability_max[i] || 0,
-                uvIndex: forecast.uv_index_max[i] || 0,
-                sunrise: new Date(forecast.sunrise[i]).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
-                sunset: new Date(forecast.sunset[i]).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
-                spcOutlook: i < 3 ? spcOutlooks[i] : null,
-            });
+        if (isHighPeriod) {
+            // Daytime segment
+            thisHigh = parseInt(forecast.temperature[i]) || 0;
+            thisConditionDay = forecast.weather[i];
+            iconDay = getConditionFromText(thisConditionDay).icon;
+            popDay = forecast.pop[i];
+            continue; // Loop to next iteration to find the night segment
+        } else {
+            // Nighttime segment
+            thisLow = parseInt(forecast.temperature[i]) || 0;
+            thisConditionNight = forecast.weather[i];
+            iconNight = getConditionFromText(thisConditionNight).icon;
+            popNight = forecast.pop[i];
         }
+
+        const date = new Date(forecasttime.startValidTime[i]);
+        
+        // Use day condition if available, otherwise use night condition
+        const weatherText = thisConditionDay || thisConditionNight || '';
+        const conditionInfo = getConditionFromText(weatherText);
+        
+        dailyData.push({
+            date: date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+            dayName: date.toLocaleDateString('en-US', { weekday: 'long' }),
+            tempHigh: thisHigh,
+            tempLow: thisLow,
+            iconDay: iconDay,
+            iconNight: iconNight,
+            condition: conditionInfo.condition,
+            popDay: (popDay !== null && popDay !== undefined) ? popDay : '0',
+            popNight: (popNight !== null && popNight !== undefined) ? popNight : '0',
+            spcOutlook: dayIndex < 3 ? spcOutlooks[dayIndex] : null,
+        });
+        
+        dayIndex++;
+        thisHigh = null;
+        thisLow = null;
+        thisConditionDay = null;
+        thisConditionNight = null;
+        iconDay = null;
+        iconNight = null;
+        popDay = null;
+        popNight = null;
     }
 
     return (
@@ -178,8 +243,11 @@ export default function DailyScreen({ onMenuOpen, onBack, data, coordinates }) {
                             </View>
                             
                             <View style={localStyles.iconTempSection}>
-                                <Text style={[styles.wxicons, { fontSize: 48, color: getIconColor(day.icon) }]}>
-                                    {wxicons(day.icon)}
+                                <Text style={[styles.wxicons, { fontSize: 48, color: getIconColor(day.iconDay) }]}>
+                                    {wxicons(day.iconDay, 'day')}
+                                </Text>
+                                <Text style={[styles.wxicons, { fontSize: 24, color: getIconColor(day.iconNight) }]}>
+                                    {wxicons(day.iconNight, 'night')}
                                 </Text>
                                 <View style={{ marginLeft: 15 }}>
                                     <Text style={[localStyles.tempText, { color: theme.primaryText }]}>{day.tempHigh}°</Text>
@@ -193,19 +261,7 @@ export default function DailyScreen({ onMenuOpen, onBack, data, coordinates }) {
                         <View style={localStyles.detailsSection}>
                             <View style={localStyles.detailItem}>
                                 <MaterialIcons name="water-drop" size={18} color={theme.weatherIconPrimary} />
-                                <Text style={[localStyles.detailText, { color: theme.secondaryText }]}>{day.precipitation}%</Text>
-                            </View>
-                            <View style={localStyles.detailItem}>
-                                <MaterialIcons name="wb-sunny" size={18} color={theme.weatherIconPrimary} />
-                                <Text style={[localStyles.detailText, { color: theme.secondaryText }]}>UV {day.uvIndex}</Text>
-                            </View>
-                            <View style={localStyles.detailItem}>
-                                <MaterialIcons name="wb-twilight" size={18} color={theme.weatherIconPrimary} />
-                                <Text style={[localStyles.detailText, { color: theme.secondaryText }]}>{day.sunrise}</Text>
-                            </View>
-                            <View style={localStyles.detailItem}>
-                                <MaterialIcons name="nights-stay" size={18} color={theme.weatherIconPrimary} />
-                                <Text style={[localStyles.detailText, { color: theme.secondaryText }]}>{day.sunset}</Text>
+                                <Text style={[localStyles.detailText, { color: theme.secondaryText }]}>{day.popDay}% / {day.popNight}%</Text>
                             </View>
                         </View>
 
