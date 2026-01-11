@@ -5,7 +5,7 @@ module.exports = {
     owner: "tgranz",
     name: "SparkRadarWX",
     slug: "SparkRadarWX",
-    version: "0.1.6",
+    version: "0.1.7",
     orientation: "portrait",
     icon: "./assets/icon.png",
     userInterfaceStyle: "automatic",
