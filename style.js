@@ -125,10 +125,10 @@ function wxicons(id) {
 function getIconColor (icon) {
     if (icon === undefined || icon === null) return '#ffaa00';
     const lower = icon.toString().toLowerCase();
-    if (lower.includes('partly')) return '#af8101ff';
     if (lower.includes('clear')) return '#ffaa00';
     if (lower.includes('cloud') || lower.includes('overcast')) return '#888888';
-    if (lower.includes('rain') || lower.includes('snow')) return '#2a7fff';
+    if (lower.includes('snow')) return '#00d4ff';
+    if (lower.includes('rain')) return '#2a7fff';
     if (lower.includes('thunderstorm')) return '#333333';
     if (lower.includes('fog') || lower.includes('haze') || lower.includes('mist')) return '#999999';
     if (lower.includes('clear')) return '#8400ff';

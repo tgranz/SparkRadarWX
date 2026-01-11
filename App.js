@@ -20,7 +20,7 @@ import * as Location from 'expo-location';
 import Svg, { Circle } from 'react-native-svg';
 import { style, wxicons, getIconColor, getContrastYIQ } from './style';
 import { useTheme } from './theme';
-import metarparser from './js/metarparser.js';
+import weatherparser from './js/weatherparser.js';
 import Toast from 'react-native-toast-message';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -218,10 +218,11 @@ function AppContent() {
     }, 3000);
     
     loadSpcRisk(lat, lon);
-    fetch('https://services9.arcgis.com/RHVPKKiFTONKtxq3/arcgis/rest/services/NOAA_METAR_current_wind_speed_direction_v1/FeatureServer/0/query?where=1=1&outFields=*&f=geojson', { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36" })
+    
+    /*fetch('https://services9.arcgis.com/RHVPKKiFTONKtxq3/arcgis/rest/services/NOAA_METAR_current_wind_speed_direction_v1/FeatureServer/0/query?where=1=1&outFields=*&f=geojson', { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36" })
       .then((response) => response.json())
       .then((json) => {
-        const parsedData = metarparser(json.features, lat, lon, (updatedData, alertsToAdd) => {
+        const parsedData = weatherparser(json.features, lat, lon, (updatedData, alertsToAdd) => {
           // Callback: Update data when async fetches complete (OpenWeatherMap or forecast data)
           // updatedData now includes: current conditions + forecast data from Open-Meteo (updatedData.forecast)
           // alertsToAdd contains weather alerts from NWS
@@ -243,7 +244,22 @@ function AppContent() {
         clearTimeout(loadingTimeout);
         setLoading(false);
         setRefreshing(false);
+      });*/
+
+      const elapsedTime = Date.now() - startTime;
+      if (elapsedTime >= 3000) {
+        setLoading(false);
+      }
+
+      const parsedData = weatherparser(lat, lon, (updatedData, alertsToAdd) => {
+        // Callback: Update data when async fetches complete
+        if (updatedData) setData(updatedData);
+        if (alertsToAdd) setAlerts(alertsToAdd);
+        setRefreshing(false);
+        setLoading(false);
       });
+      setData(parsedData);
+      setRefreshing(false);
   };
 
   // Function to convert degrees to cardinal direction
@@ -512,8 +528,8 @@ function AppContent() {
 
           <TouchableOpacity style={styles.titleContainer} onPress={() => setLocationOpen(true)}>
             <View style={styles.titleContainer}>
-              <Text style={styles.header}>{ data.STATION_NAME ? data.STATION_NAME : locationName }</Text>
-              <Text style={styles.text}>{data.ICAO}</Text>
+              <Text style={styles.header}>{ data.station ? data.station : locationName }</Text>
+              <Text style={styles.text}>{data.station}</Text>
             </View>
           </TouchableOpacity>
 
@@ -539,11 +555,16 @@ function AppContent() {
         >
 
         <View style={[styles.cardContainer, (open || locationOpen) && { pointerEvents: 'none' }, { marginTop: 20, paddingHorizontal: 60, flexDirection: 'row', alignItems: 'center' }]}>
-          <Text style={[styles.wxicons, { color: getIconColor(data.WEATHER) }]}>{ getDataFromCondition(data.WEATHER).icon}</Text>
+          <Text style={[styles.wxicons, { color: getIconColor(data.condition) }]}>{ getDataFromCondition(data.condition).icon}</Text>
           <View style={{ marginLeft: 10 }}>
-            <Text style={styles.header}>{getDataFromCondition(data.WEATHER).condition.charAt(0).toUpperCase() + getDataFromCondition(data.WEATHER).condition.slice(1)}</Text>
-            <Text style={[styles.header, { fontSize: 28 }]}>{Math.round(data.TEMP)}°</Text>
+            <Text style={styles.header}>{getDataFromCondition(data.condition).condition.charAt(0).toUpperCase() + getDataFromCondition(data.condition).condition.slice(1)}</Text>
+            <Text style={[styles.header, { fontSize: 28 }]}>{Math.round(data.temp)}°</Text>
           </View>
+        </View>
+
+        <View style={[styles.cardContainer, (open || locationOpen) && { pointerEvents: 'none' }, { paddingHorizontal: 60, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', gap: 10 }]}>
+          <MaterialIcons name="info" size={22} color={theme.iconColor} />
+          <Text style={styles.text}>{data.insight}</Text>
         </View>
 
         {(spcRisk && getSpcIndex(spcRisk.label) > 0) && (
@@ -593,17 +614,18 @@ function AppContent() {
         ))}
 
         {(() => {
-          if (!data.forecast?.hourly?.precipitation_probability) return null;
+          if (!data.hourlyForecast || data.hourlyForecast.length === 0) return null;
           const now = new Date();
           let startIndex = 0;
-          for (let i = 0; i < data.forecast.hourly.time.length; i++) {
-            const forecastTime = new Date(data.forecast.hourly.time[i]);
+          for (let i = 0; i < data.hourlyForecast.length; i++) {
+            const forecastTime = new Date(data.hourlyForecast[i].dt * 1000);
             if (forecastTime >= now) {
               startIndex = i;
               break;
             }
           }
-          const precipData = data.forecast.hourly.precipitation_probability.slice(startIndex, startIndex + 24);
+          const hourlyData = data.hourlyForecast.slice(startIndex, startIndex + 24);
+          const precipData = hourlyData.map(hour => (hour.pop ? hour.pop * 100 : 0));
           if (!precipData.some(prob => prob > 30)) return null;
           
           return (
@@ -643,21 +665,21 @@ function AppContent() {
                 <MaterialIcons name="opacity" size={24} color={theme.weatherIconPrimary} />
                 <View>
                   <Text style={styles.text}>Dew Point</Text>
-                  <Text style={[styles.text, { fontWeight: 'bold' }]}>{Math.round(data.DEW_POINT)}°</Text>
+                  <Text style={[styles.text, { fontWeight: 'bold' }]}>{Math.round(data.dew_point)}°</Text>
                 </View>
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <MaterialIcons name="compress" size={24} color={theme.weatherIconPrimary} />
                 <View>
                   <Text style={styles.text}>Pressure</Text>
-                  <Text style={[styles.text, { fontWeight: 'bold' }]}>{data.PRESSURE} mb</Text>
+                  <Text style={[styles.text, { fontWeight: 'bold' }]}>{parseFloat(data.pressure).toFixed(2)} inHg</Text>
                 </View>
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <MaterialIcons name="speed" size={24} color={theme.weatherIconPrimary} />
                 <View>
                   <Text style={styles.text}>Wind Speed</Text>
-                  <Text style={[styles.text, { fontWeight: 'bold' }]}>{data.WIND_SPEED} mph</Text>
+                  <Text style={[styles.text, { fontWeight: 'bold' }]}>{Math.round(data.wind_speed)} mph</Text>
                 </View>
               </View>
             </View>
@@ -666,21 +688,21 @@ function AppContent() {
                 <MaterialIcons name="water-drop" size={24} color={theme.weatherIconPrimary} />
                 <View>
                   <Text style={styles.text}>Humidity</Text>
-                  <Text style={[styles.text, { fontWeight: 'bold' }]}>{Math.round(data.R_HUMIDITY)}%</Text>
+                  <Text style={[styles.text, { fontWeight: 'bold' }]}>{Math.round(data.r_humidity)}%</Text>
                 </View>
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <MaterialIcons name="visibility" size={24} color={theme.weatherIconPrimary} />
                 <View>
                   <Text style={styles.text}>Visibility</Text>
-                  <Text style={[styles.text, { fontWeight: 'bold' }]}>{Math.round(data.VISIBILITY / 1000)} mi</Text>
+                  <Text style={[styles.text, { fontWeight: 'bold' }]}>{parseInt(data.visibility)} mi</Text>
                 </View>
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <MaterialIcons name="wind-power" size={24} color={theme.weatherIconPrimary} />
                 <View>
                   <Text style={styles.text}>Wind Direction</Text>
-                  <Text style={[styles.text, { fontWeight: 'bold' }]}>{ degToCardinal(Math.round(data.WIND_DIRECT))} ({Math.round(data.WIND_DIRECT)}°)</Text>
+                  <Text style={[styles.text, { fontWeight: 'bold' }]}>{ degToCardinal(Math.round(data.wind_direction))} ({Math.round(data.wind_direction)}°)</Text>
                 </View>
               </View>
             </View>
@@ -703,7 +725,7 @@ function AppContent() {
           </TouchableOpacity>
         </View>
 
-        <Text style={[ styles.text, { textAlign: 'center', marginTop: 10 }]}>{data.source}</Text>
+        <Text style={[ styles.text, { textAlign: 'center', marginTop: 10 }]}>Source: NWS and OpenWeatherMap</Text>
 
         </ScrollView>
 
