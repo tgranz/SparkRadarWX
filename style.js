@@ -125,7 +125,8 @@ function wxicons(id) {
 function getIconColor (icon) {
     if (icon === undefined || icon === null) return '#ffaa00';
     const lower = icon.toString().toLowerCase();
-    if (lower.includes('clear')) return '#ffaa00';
+    if (lower.includes('partly')) return '#c59e00ff';
+    if (lower.includes('clear')) return '#ffcc00';
     if (lower.includes('cloud') || lower.includes('overcast')) return '#888888';
     if (lower.includes('snow')) return '#00d4ff';
     if (lower.includes('rain') || lower.includes('drizzle')) return '#2a7fff';

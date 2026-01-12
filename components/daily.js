@@ -161,6 +161,7 @@ export default function DailyScreen({ onMenuOpen, onBack, data, coordinates }) {
     var popDay = null;
     var popNight = null;
     var dayIndex = 0;
+    var first = true;
     
     for (let i = 0; i < daysToShow; i++) {
         // Use tempLabel to determine if this is a High or Low period
@@ -189,7 +190,7 @@ export default function DailyScreen({ onMenuOpen, onBack, data, coordinates }) {
         
         dailyData.push({
             date: date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
-            dayName: date.toLocaleDateString('en-US', { weekday: 'long' }),
+            dayName: first ? "Today" : date.toLocaleDateString('en-US', { weekday: 'long' }),
             tempHigh: thisHigh,
             tempLow: thisLow,
             iconDay: iconDay,
@@ -201,6 +202,7 @@ export default function DailyScreen({ onMenuOpen, onBack, data, coordinates }) {
         });
         
         dayIndex++;
+        first = false;
         thisHigh = null;
         thisLow = null;
         thisConditionDay = null;
@@ -250,15 +252,14 @@ export default function DailyScreen({ onMenuOpen, onBack, data, coordinates }) {
                                     {wxicons(day.iconNight, 'night')}
                                 </Text>
                                 <View style={{ marginLeft: 15 }}>
-                                    <Text style={[localStyles.tempText, { color: theme.primaryText }]}>{day.tempHigh}°</Text>
+                                    <Text style={[localStyles.tempText, { color: theme.primaryText }]}>{day.tempHigh ? day.tempHigh : '--'}°</Text>
                                     <Text style={[localStyles.tempLowText, { color: theme.secondaryText }]}>{day.tempLow}°</Text>
                                 </View>
                             </View>
                         </View>
 
-                        <Text style={[localStyles.conditionText, { color: theme.secondaryText }]}>{day.condition}</Text>
-
-                        <View style={localStyles.detailsSection}>
+                        <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignContent: 'center', marginBottom: 0 }}>
+                            <Text style={[localStyles.conditionText, { color: theme.secondaryText }]}>{day.condition}</Text>
                             <View style={localStyles.detailItem}>
                                 <MaterialIcons name="water-drop" size={18} color={theme.weatherIconPrimary} />
                                 <Text style={[localStyles.detailText, { color: theme.secondaryText }]}>{day.popDay}% / {day.popNight}%</Text>
@@ -315,7 +316,7 @@ const localStyles = StyleSheet.create({
     },
     conditionText: {
         fontSize: 16,
-        marginBottom: 12,
+        marginBottom: 0,
     },
     detailsSection: {
         flexDirection: 'row',

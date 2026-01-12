@@ -18,6 +18,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { WebView } from 'react-native-webview';
 import * as Location from 'expo-location';
 import Svg, { Circle } from 'react-native-svg';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { style, wxicons, getIconColor, getContrastYIQ } from './style';
 import { useTheme } from './theme';
 import weatherparser from './js/weatherparser.js';
@@ -35,6 +36,7 @@ import RadarScreen from './components/radar.js';
 import SettingsScreen from './components/settings.js';
 import AboutScreen from './components/about.js';
 import RadiosScreen from './components/radios.js';
+import OnboardingScreen from './components/onboarding.js';
 
 
 function getDataFromCondition(condition) {
@@ -81,9 +83,12 @@ function getDataFromCondition(condition) {
   } else if (condition.toLowerCase().includes("thunderstorm") || condition.toLowerCase().includes("storm")) {
     id = "thunderstorm";
     newCondition = "Thunderstorm";
-  } else if (condition.toLowerCase().includes("rain") || condition.toLowerCase().includes("drizzle")) {
+  } else if (condition.toLowerCase().includes("rain")) {
     id = "rain";
     newCondition = "Rain";
+  } else if (condition.toLowerCase().includes("drizzle")) {
+    id = "rain";
+    newCondition = "Light Rain";
   }
 
   return {
@@ -121,6 +126,13 @@ function AppContent() {
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const [locationName, setLocationName] = useState("Current Location");
   const hasLoadedData = useRef(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  
+  // Unit preferences
+  const [tempUnit, setTempUnit] = useState('fahrenheit');
+  const [pressureUnit, setPressureUnit] = useState('inches');
+  const [distanceUnit, setDistanceUnit] = useState('miles');
+  const [speedUnit, setSpeedUnit] = useState('mph');
 
   const SPC_OUTLOOK_URL = 'https://www.spc.noaa.gov/products/outlook/day1otlk_cat.nolyr.geojson';
 
@@ -207,6 +219,102 @@ function AppContent() {
     }
   };
 
+  // Load unit preferences
+  const loadUnitPreferences = async () => {
+    try {
+      const [savedTempUnit, savedPressureUnit, savedDistanceUnit, savedSpeedUnit, hasSeenOnboarding] = await Promise.all([
+        AsyncStorage.getItem('tempUnit'),
+        AsyncStorage.getItem('pressureUnit'),
+        AsyncStorage.getItem('distanceUnit'),
+        AsyncStorage.getItem('speedUnit'),
+        AsyncStorage.getItem('hasSeenOnboarding'),
+      ]);
+
+      if (savedTempUnit !== null) setTempUnit(savedTempUnit);
+      if (savedPressureUnit !== null) setPressureUnit(savedPressureUnit);
+      if (savedDistanceUnit !== null) setDistanceUnit(savedDistanceUnit);
+      if (savedSpeedUnit !== null) setSpeedUnit(savedSpeedUnit);
+      
+      // Show onboarding if user hasn't seen it
+      if (hasSeenOnboarding === null) {
+        setShowOnboarding(true);
+      }
+    } catch (error) {
+      console.error('Error loading unit preferences:', error);
+    }
+  };
+
+  // Conversion functions
+  const convertTemperature = (tempF, unit) => {
+    if (unit === 'celsius') {
+      return (tempF - 32) * 5 / 9;
+    }
+    return tempF;
+  };
+
+  const convertPressure = (inHg, unit) => {
+    inHg = parseFloat(inHg);
+    switch (unit) {
+      case 'millibars':
+        return (inHg * 33.8639).toFixed(0); // Convert inHg to mb/hPa
+      case 'mmHg':
+        return (inHg * 25.4).toFixed(2); // Convert inHg to mmHg
+      case 'inches':
+      default:
+        return inHg.toFixed(2); // Already in inches
+    }
+  };
+
+  const convertDistance = (miles, unit) => {
+    if (unit === 'kilometers') {
+      return miles * 1.60934;
+    }
+    return miles;
+  };
+
+  const convertSpeed = (mph, unit) => {
+    if (unit === 'kph') {
+      return mph * 1.60934;
+    }
+    return mph;
+  };
+
+  // Convert entire data object based on unit preferences
+  const convertData = (rawData) => {
+    if (!rawData) return rawData;
+
+    const converted = { ...rawData };
+    converted.temp = convertTemperature(rawData.temp, tempUnit);
+    converted.dew_point = convertTemperature(rawData.dew_point, tempUnit);
+    converted.pressure = convertPressure(rawData.pressure, pressureUnit);
+    converted.visibility = convertDistance(rawData.visibility, distanceUnit);
+    converted.wind_speed = convertSpeed(rawData.wind_speed, speedUnit);
+
+    // Convert forecast data if it exists
+    if (converted.dailyForecast && Array.isArray(converted.dailyForecast)) {
+      converted.dailyForecast = converted.dailyForecast.map(day => ({
+        ...day,
+        temp_max: convertTemperature(day.temp_max, tempUnit),
+        temp_min: convertTemperature(day.temp_min, tempUnit),
+        wind_speed: convertSpeed(day.wind_speed, speedUnit),
+      }));
+    }
+
+    if (converted.hourlyForecast && Array.isArray(converted.hourlyForecast)) {
+      converted.hourlyForecast = converted.hourlyForecast.map(hour => ({
+        ...hour,
+        temp: convertTemperature(hour.temp, tempUnit),
+        wind_speed: convertSpeed(hour.wind_speed, speedUnit),
+      }));
+    }
+
+    if (converted.minutelyForecast && Array.isArray(converted.minutelyForecast)) {
+      converted.minutelyForecast = converted.minutelyForecast.map(min => ({ ...min }));
+    }
+
+    return converted;
+  };
+
   // Fetch and parse
   const loadCurrentConditions = (lat, lon) => {
     setLoading(true);
@@ -218,33 +326,6 @@ function AppContent() {
     }, 3000);
     
     loadSpcRisk(lat, lon);
-    
-    /*fetch('https://services9.arcgis.com/RHVPKKiFTONKtxq3/arcgis/rest/services/NOAA_METAR_current_wind_speed_direction_v1/FeatureServer/0/query?where=1=1&outFields=*&f=geojson', { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36" })
-      .then((response) => response.json())
-      .then((json) => {
-        const parsedData = weatherparser(json.features, lat, lon, (updatedData, alertsToAdd) => {
-          // Callback: Update data when async fetches complete (OpenWeatherMap or forecast data)
-          // updatedData now includes: current conditions + forecast data from Open-Meteo (updatedData.forecast)
-          // alertsToAdd contains weather alerts from NWS
-          if (updatedData) setData(updatedData);
-          if (alertsToAdd) setAlerts(alertsToAdd);
-          // Don't set loading to false here - let the timeout handle it
-          setRefreshing(false);
-        });
-        setData(parsedData);
-        // Only clear loading immediately if data loads before 3 seconds
-        const elapsedTime = Date.now() - startTime;
-        if (elapsedTime >= 3000) {
-          setLoading(false);
-        }
-        setRefreshing(false);
-      })
-      .catch((error) => {
-        console.error(error);
-        clearTimeout(loadingTimeout);
-        setLoading(false);
-        setRefreshing(false);
-      });*/
 
       const elapsedTime = Date.now() - startTime;
       if (elapsedTime >= 3000) {
@@ -253,12 +334,12 @@ function AppContent() {
 
       const parsedData = weatherparser(lat, lon, (updatedData, alertsToAdd) => {
         // Callback: Update data when async fetches complete
-        if (updatedData) setData(updatedData);
+        if (updatedData) setData(convertData(updatedData));
         if (alertsToAdd) setAlerts(alertsToAdd);
         setRefreshing(false);
         setLoading(false);
-      });
-      setData(parsedData);
+      }, { tempUnit, speedUnit });
+      setData(convertData(parsedData));
       setRefreshing(false);
   };
 
@@ -269,6 +350,32 @@ function AppContent() {
     return directions[index];
   }
 
+  // Helper functions to get unit symbols
+  const getTempUnit = () => tempUnit === 'celsius' ? '°C' : '°F';
+  const getPressureUnit = () => {
+    switch (pressureUnit) {
+      case 'millibars':
+        return 'mb';
+      case 'mmHg':
+        return 'mmHg';
+      case 'inches':
+      default:
+        return 'inHg';
+    }
+  };
+  const getDistanceUnit = () => distanceUnit === 'kilometers' ? 'km' : 'mi';
+  const getSpeedUnit = () => speedUnit === 'kph' ? 'km/h' : 'mph';
+
+  // Handle onboarding completion
+  const handleOnboardingComplete = async () => {
+    try {
+      await AsyncStorage.setItem('hasSeenOnboarding', 'true');
+      setShowOnboarding(false);
+    } catch (error) {
+      console.error('Error saving onboarding state:', error);
+    }
+  };
+
   // Pull to refresh handler
   const onRefresh = () => {
     const now = Date.now();
@@ -276,10 +383,9 @@ function AppContent() {
     const cooldownTime = 30000; // 30 seconds
 
     if (timeSinceLastRefresh < cooldownTime) {
-      console.log(`Please wait ${Math.ceil((cooldownTime - timeSinceLastRefresh) / 1000)} seconds before refreshing again`);
       Toast.show({
         type: 'info',
-        text1: 'Please wait before refreshing again.',
+        text1: 'Please wait ' + Math.ceil((cooldownTime - timeSinceLastRefresh) / 1000) + ' seconds before refreshing again',
         position: 'bottom',
         visibilityTime: 3000,
       });
@@ -309,6 +415,9 @@ function AppContent() {
         setCoordinates(FALLBACK_COORDS);
       }
     })();
+
+    // Load unit preferences on app start
+    loadUnitPreferences();
   }, []);
     
 
@@ -318,6 +427,13 @@ function AppContent() {
       hasLoadedData.current = true;
     }
   }, [coordinates]);
+
+  // Re-convert data when unit preferences change
+  useEffect(() => {
+    if (data && Object.keys(data).length > 0) {
+      setData(convertData(data));
+    }
+  }, [tempUnit, pressureUnit, distanceUnit, speedUnit]);
 
   // Animate screen transitions
   useEffect(() => {
@@ -427,6 +543,15 @@ function AppContent() {
         source={require('./assets/spinner.png')} 
         style={{ width: 75, height: 75, transform: [{ rotate: spin }] }} 
       />
+      </View>
+    );
+  }
+
+  // Show onboarding screen if this is first launch
+  if (showOnboarding) {
+    return (
+      <View style={{ flex: 1, backgroundColor: theme.gradientStart }}>
+        <OnboardingScreen onComplete={handleOnboardingComplete} />
       </View>
     );
   }
@@ -554,7 +679,7 @@ function AppContent() {
           }
         >
 
-        <View style={[styles.cardContainer, (open || locationOpen) && { pointerEvents: 'none' }, { marginTop: 20, paddingHorizontal: 60, flexDirection: 'row', alignItems: 'center' }]}>
+        <View style={[styles.cardContainer, (open || locationOpen) && { pointerEvents: 'none' }, { paddingHorizontal: 60, flexDirection: 'row', alignItems: 'center' }]}>
           <Text style={[styles.wxicons, { color: getIconColor(data.condition) }]}>{ getDataFromCondition(data.condition).icon}</Text>
           <View style={{ marginLeft: 10 }}>
             <Text style={styles.header}>{getDataFromCondition(data.condition).condition.charAt(0).toUpperCase() + getDataFromCondition(data.condition).condition.slice(1)}</Text>
@@ -562,9 +687,9 @@ function AppContent() {
           </View>
         </View>
 
-        <View style={[styles.cardContainer, (open || locationOpen) && { pointerEvents: 'none' }, { paddingHorizontal: 60, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', gap: 10 }]}>
+        <View style={[styles.cardContainer, (open || locationOpen) && { pointerEvents: 'none' }, { paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', gap: 10 }]}>
           <MaterialIcons name="info" size={22} color={theme.iconColor} />
-          <Text style={styles.text}>{data.insight}</Text>
+          <Text style={[styles.text, { width: '80%' }]}>{data.insight}</Text>
         </View>
 
         {(spcRisk && getSpcIndex(spcRisk.label) > 0) && (
@@ -614,6 +739,52 @@ function AppContent() {
         ))}
 
         {(() => {
+          if (!data.minutelyForecast || data.minutelyForecast.length === 0) return null;
+
+          // Use next 60 minutes of precipitation probability/intensity
+          const minuteData = data.minutelyForecast.slice(0, 60);
+          const precipData = minuteData.map(min => min.precipitation || 0); // mm of precip per minute
+
+          // If all zero/near-zero, don't render
+          if (!precipData.some(val => val > 0)) return null;
+
+          // Normalize heights for bar chart
+          const maxPrecip = Math.max(...precipData, 0.01);
+          const bars = precipData.map(val => (val / maxPrecip) * 50); // max height 50
+
+          const now = new Date();
+          const mid = new Date(now.getTime() + 30 * 60 * 1000);
+          const end = new Date(now.getTime() + 60 * 60 * 1000);
+          
+          return (
+            <View style={[styles.cardContainer, (open || locationOpen) && { pointerEvents: 'none' }]}>
+              <View style={{ width: '100%' }}>
+                <Text style={[styles.header, { fontSize: 18, marginBottom: 10 }]}>Precipitation next 60 min</Text>
+                <View style={{ width: '100%', flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-around', height: 60, flexWrap: 'nowrap' }}>
+                  {bars.map((height, index) => (
+                    <View key={index} style={{ alignItems: 'center', flex: 1, maxWidth: '1.66%' }}>
+                      <View 
+                        style={{ 
+                          width: '90%', 
+                          backgroundColor: height < 22 ? '#444444' : height < 44 ? '#2a7fff' : '#27beff', 
+                          height, 
+                          borderRadius: 6,
+                        }} 
+                      />
+                    </View>
+                  ))}
+                </View>
+                <View style={{ display: 'flex', justifyContent: 'space-between', flexDirection: 'row', alignItems: 'center', marginTop: 10 }}>
+                  <Text style={styles.text}>{now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}</Text>
+                  <Text style={styles.text}>{mid.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}</Text>
+                  <Text style={styles.text}>{end.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}</Text>
+                </View>
+              </View>
+            </View>
+          );
+        })()}
+
+        {(() => {
           if (!data.hourlyForecast || data.hourlyForecast.length === 0) return null;
           const now = new Date();
           let startIndex = 0;
@@ -625,7 +796,10 @@ function AppContent() {
             }
           }
           const hourlyData = data.hourlyForecast.slice(startIndex, startIndex + 24);
-          const precipData = hourlyData.map(hour => (hour.pop ? hour.pop * 100 : 0));
+          // Ensure numeric probability values; default to 0 if missing
+          const precipData = hourlyData.map(hour => (
+            typeof hour.pop === 'number' ? hour.pop * 100 : 0
+          ));
           if (!precipData.some(prob => prob > 30)) return null;
           
           return (
@@ -639,7 +813,7 @@ function AppContent() {
                         <View 
                           style={{ 
                             width: '90%', 
-                            backgroundColor: '#27beff', 
+                            backgroundColor: prob < 17 ? '#444444' : prob < 34 ? '#2a7fff' : '#27beff', 
                             height: prob/2, 
                             borderRadius: 10,
                           }} 
@@ -659,27 +833,34 @@ function AppContent() {
         })()}
 
         <View style={[styles.cardContainer, (open || locationOpen) && { pointerEvents: 'none' }]}> 
-          <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-around' }}>
+          <View style={{ flexDirection: 'row', width: '100%', justifyContent: 'space-around', marginVertical: 10 }}>
             <View style={{ gap: 15 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <MaterialIcons name="opacity" size={24} color={theme.weatherIconPrimary} />
                 <View>
                   <Text style={styles.text}>Dew Point</Text>
-                  <Text style={[styles.text, { fontWeight: 'bold' }]}>{Math.round(data.dew_point)}°</Text>
+                  <Text style={[styles.text, { fontWeight: 'bold' }]}>{Math.round(data.dew_point)}{getTempUnit()}</Text>
                 </View>
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <MaterialIcons name="compress" size={24} color={theme.weatherIconPrimary} />
                 <View>
                   <Text style={styles.text}>Pressure</Text>
-                  <Text style={[styles.text, { fontWeight: 'bold' }]}>{parseFloat(data.pressure).toFixed(2)} inHg</Text>
+                  <Text style={[styles.text, { fontWeight: 'bold' }]}>{parseFloat(data.pressure)} {getPressureUnit()}</Text>
                 </View>
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <MaterialIcons name="speed" size={24} color={theme.weatherIconPrimary} />
                 <View>
                   <Text style={styles.text}>Wind Speed</Text>
-                  <Text style={[styles.text, { fontWeight: 'bold' }]}>{Math.round(data.wind_speed)} mph</Text>
+                  <Text style={[styles.text, { fontWeight: 'bold' }]}>{Math.round(data.wind_speed)} {getSpeedUnit()}</Text>
+                </View>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <MaterialIcons name="sunny" size={24} color={theme.weatherIconPrimary} />
+                <View>
+                  <Text style={styles.text}>UV Index</Text>
+                  <Text style={[styles.text, { fontWeight: 'bold' }]}>{Math.round(data.uvindex)}</Text>
                 </View>
               </View>
             </View>
@@ -695,7 +876,7 @@ function AppContent() {
                 <MaterialIcons name="visibility" size={24} color={theme.weatherIconPrimary} />
                 <View>
                   <Text style={styles.text}>Visibility</Text>
-                  <Text style={[styles.text, { fontWeight: 'bold' }]}>{parseInt(data.visibility)} mi</Text>
+                  <Text style={[styles.text, { fontWeight: 'bold' }]}>{parseInt(data.visibility)} {getDistanceUnit()}</Text>
                 </View>
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -703,6 +884,13 @@ function AppContent() {
                 <View>
                   <Text style={styles.text}>Wind Direction</Text>
                   <Text style={[styles.text, { fontWeight: 'bold' }]}>{ degToCardinal(Math.round(data.wind_direction))} ({Math.round(data.wind_direction)}°)</Text>
+                </View>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <MaterialIcons name="cloud" size={24} color={theme.weatherIconPrimary} />
+                <View>
+                  <Text style={styles.text}>Cloud Cover</Text>
+                  <Text style={[styles.text, { fontWeight: 'bold' }]}>{parseInt(data.cloudcover)}%</Text>
                 </View>
               </View>
             </View>
@@ -725,7 +913,86 @@ function AppContent() {
           </TouchableOpacity>
         </View>
 
-        <Text style={[ styles.text, { textAlign: 'center', marginTop: 10 }]}>Source: NWS and OpenWeatherMap</Text>
+        {(data.sunrise || data.sunset) && (
+          <View style={[styles.cardContainer, (open || locationOpen) && { pointerEvents: 'none' }, { flexDirection: 'column', alignItems: 'center' }]}>
+            <Text style={[styles.header, { fontSize: 18, marginBottom: 15 }]}>Sunrise & Sunset</Text>
+            <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+              {(() => {
+                const calculateSunPosition = () => {
+                  const parseTime = (timeStr) => {
+                    if (!timeStr) return null;
+                    const match = timeStr.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+                    if (!match) return null;
+                    let hours = parseInt(match[1], 10);
+                    const minutes = parseInt(match[2], 10);
+                    const period = match[3].toUpperCase();
+                    if (period === 'PM' && hours !== 12) hours += 12;
+                    if (period === 'AM' && hours === 12) hours = 0;
+                    return hours * 60 + minutes;
+                  };
+
+                  const sunriseMinutes = parseTime(data.sunrise);
+                  const sunsetMinutes = parseTime(data.sunset);
+                  
+                  if (sunriseMinutes == null || sunsetMinutes == null) return { x: 100, y: 15 };
+                  
+                  const now = new Date();
+                  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+                  const clampedMinutes = Math.max(sunriseMinutes, Math.min(sunsetMinutes, currentMinutes));
+                  
+                  const ratio = (clampedMinutes - sunriseMinutes) / (sunsetMinutes - sunriseMinutes);
+                  const angle = ratio * 180;
+                  const radians = angle * Math.PI / 180;
+                  
+                  const x = 100 + 85 * Math.cos(radians);
+                  const y = 100 - 85 * Math.sin(radians);
+                  
+                  return { x, y };
+                };
+                
+                const sunPos = calculateSunPosition();
+
+                return (
+                  <Svg width={200} height={100} viewBox="0 0 200 70">
+                    {/* Sun arc */}
+                    <Circle
+                      cx={100}
+                      cy={100}
+                      r={85}
+                      stroke={theme.iconColor}
+                      strokeWidth={1}
+                      fill="none"
+                      opacity={0.3}
+                    />
+                    {/* Sun on arc at proportional position */}
+                    <Circle
+                      cx={sunPos.x}
+                      cy={sunPos.y}
+                      r={10}
+                      fill="#ffcc00"
+                    />
+                  </Svg>
+                );
+              })()}
+              
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginTop: 15, paddingHorizontal: 0 }}>
+                <View style={{ alignItems: 'center', flex: 1 }}>
+                  <MaterialIcons name="wb-twilight" size={28} color={theme.iconColor} style={{ marginBottom: 8 }} />
+                  <Text style={[styles.text, { fontSize: 12 }]}>Sunrise</Text>
+                  <Text style={[styles.header, { fontSize: 16 }]}>{data.sunrise || "—"}</Text>
+                </View>
+                
+                <View style={{ alignItems: 'center', flex: 1 }}>
+                  <MaterialIcons name="nights-stay" size={28} color={theme.iconColor} style={{ marginBottom: 8 }} />
+                  <Text style={[styles.text, { fontSize: 12 }]}>Sunset</Text>
+                  <Text style={[styles.header, { fontSize: 16 }]}>{data.sunset || "—"}</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        )}
+
+        <Text style={[ styles.text, { textAlign: 'center', marginTop: 10, marginBottom: 30 }]}>Source: NWS and OpenWeatherMap</Text>
 
         </ScrollView>
 

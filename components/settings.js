@@ -140,13 +140,11 @@ export default function SettingsScreen({ onBack }) {
 
         <View style={styles.titleContainer}>
           <Text style={styles.header}>Settings</Text>
+          <Text style={styles.text}>Reload app to apply changes</Text>
         </View>
 
         <View style={styles.side} />
       </View>
-
-      <Text style={styles.text}>*****  SETTINGS DO NOT WORK YET</Text>
-
 
       <ScrollView style={{ flex: 1, width: '100%' }} contentContainerStyle={{ paddingBottom: 20 }}>
         <Text style={[styles.text, { margin: 15, fontSize: 18, fontWeight: 'bold' }]}>Units</Text>

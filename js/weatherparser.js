@@ -15,9 +15,16 @@
     dew_point: 0, in fahrenheit
     wind_direction: 0, degrees
     wind_speed: 0, in mph
-    pressure: 0, in hPa
+    pressure: 0, in inHg
     r_humidity: 0,
-    visibility: 0, in miles
+    visibility: 0, in miles,
+    sunrise: "", local time string,
+    sunset: "", local time string,
+    insight: "", // Simple weather insight string
+    forecast: { ... },
+    hourly: { ... },
+    minutely: { ... },
+    alerts: { ... },
     forecast: { ... }
 }
 */
@@ -27,7 +34,30 @@ import Constants from 'expo-constants';
 const OPENWEATHER_API_KEY = Constants.expoConfig?.extra?.openWeatherApiKey || process.env.OPENWEATHER_API_KEY;
 
 // Main parser function
-function weatherparser(lat, lon, callback) {
+function weatherparser(lat, lon, callback, units = {}) {
+    const unitPrefs = {
+        tempUnit: units.tempUnit || 'fahrenheit',
+        speedUnit: units.speedUnit || 'mph',
+    };
+
+    // Conversion functions
+    const convertTemperature = (tempF) => {
+        if (unitPrefs.tempUnit === 'celsius') {
+            return Math.round((tempF - 32) * 5 / 9);
+        }
+        return Math.round(tempF);
+    };
+
+    const convertSpeed = (mph) => {
+        if (unitPrefs.speedUnit === 'kph') {
+            return Math.round(mph * 1.60934);
+        }
+        return Math.round(mph);
+    };
+
+    const getTempUnit = () => unitPrefs.tempUnit === 'celsius' ? '°C' : '°F';
+    const getSpeedUnit = () => unitPrefs.speedUnit === 'kph' ? 'km/h' : 'mph';
+
     // Convert OpenWeatherMap forecast to NWS-compatible format
     const convertOWMToNWSFormat = (owmData) => {
         const time = {
@@ -93,6 +123,7 @@ function weatherparser(lat, lon, callback) {
         let baseData;
         let forecast;
         let hourlyForecast = null;
+        let minutelyForecast = null;
 
         const nwsConditions = nwsForecast?.currentobservation || null;
 
@@ -107,6 +138,10 @@ function weatherparser(lat, lon, callback) {
             pressure: nwsConditions?.SLP || (owmData && owmData.current ? owmData.current.pressure / 33.864 : 0),
             r_humidity: nwsConditions?.Relh || (owmData && owmData.current ? (owmData.current.humidity > 100 ? 100 : owmData.current.humidity) : 0),
             visibility: nwsConditions?.Visibility || (owmData && owmData.current ? (owmData.current.visibility > 10 ? 10 : owmData.current.visibility) : 0),
+            sunrise: owmData?.current?.sunrise ? new Date(owmData.current.sunrise * 1000).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : null,
+            sunset: owmData?.current?.sunset ? new Date(owmData.current.sunset * 1000).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : null,
+            cloudcover: owmData?.current?.clouds || 0,
+            uvindex: owmData?.current?.uvi || 0
         }
         
         // Determine daily forecast: NWS first, OWM fallback
@@ -126,25 +161,51 @@ function weatherparser(lat, lon, callback) {
             hourlyForecast = owmData.hourly;
             console.log("Using OpenWeatherMap hourly forecast");
         }
+
+        // Use OWM minutely forecast for next hour when available
+        if (owmData && owmData.minutely) {
+            minutelyForecast = owmData.minutely.slice(0, 60);
+            console.log("Using OpenWeatherMap minutely forecast");
+        }
         
         // Attach forecasts to baseData
         baseData.forecast = forecast;
         baseData.hourlyForecast = hourlyForecast;
+        baseData.minutelyForecast = minutelyForecast;
+
+        // Generate info on the next 24 hours
+        const precipData = hourlyForecast.map(hour => (
+            typeof hour.pop === 'number' ? hour.pop * 100 : 0
+          ));
 
         // Generate simple insight
-        if (nwsConditions?.Gust && parseInt(nwsConditions?.Gust) - parseInt(baseData.wind_speed) >= 10) {
-            baseData.insight = `Wind is gusting up to ${nwsConditions.Gust} mph.`;
-        } else if (nwsConditions?.WindChill && parseInt(nwsConditions?.WindChill) < parseInt(baseData.temp)) {
-            baseData.insight = `Wind chill is making it feel like ${nwsConditions.WindChill}°F.`;
+        if (precipData.some(prob => prob > 80)){
+            baseData.insight = "There's a high chance of precipitation in the next 24 hours.";
+        } else if (precipData.some(prob => prob > 30)){
+            baseData.insight = "There's a chance of precipitation in the next 24 hours.";
+        } else if (nwsConditions?.Gust && parseInt(nwsConditions?.Gust) - parseInt(baseData.wind_speed) >= 10) {
+            baseData.insight = `Wind is gusting up to ${convertSpeed(parseInt(nwsConditions.Gust))} ${getSpeedUnit()}.`;
+        } else if (nwsConditions?.WindChill && parseInt(baseData.temp) - parseInt(nwsConditions?.WindChill) >= 5) {
+            baseData.insight = `Wind chill is making it feel like ${convertTemperature(parseInt(nwsConditions.WindChill))}${getTempUnit()}.`;
+        } else if (baseData.uvindex >= 8) {
+            baseData.insight = "UV index is very high, be sure to use sunscreen!";
+        } else if (baseData.visibility <= 2) {
+            baseData.insight = "Visibility is very low, exercise caution is driving.";
         } else if (parseInt(baseData.r_humidity) > 99) {
             baseData.insight = "It's quite humid outside.";
+        } else if (parseInt(baseData.r_humidity) < 20) {
+            if (baseData.wind_speed >= 15) {
+                baseData.insight = "It's very dry and windy outside. Avoid burning.";
+            } else {
+                baseData.insight = "It's very dry outside. Exercise caution if burning.";
+            }
         } else {
-            if (baseData.temp <= 40) {
+            if (baseData.temp <= 50) {
                 baseData.insight = "It's quite cold outside, be sure to dress warm!";
-            } else if (baseData.temp >= 80) {
+            } else if (baseData.temp >= 85) {
                 baseData.insight = "It's quite hot outside, be sure to stay hydrated!";
             } else {
-                baseData.insight = "The weather is quite nice outside!";
+                baseData.insight = "The temperature is quite nice outside!";
             }
         }
         
@@ -168,7 +229,12 @@ function weatherparser(lat, lon, callback) {
                 visibility: 0,
                 forecast: null,
                 hourlyForecast: null,
+                minutelyForecast: null,
                 insight: null,
+                sunrise: null,
+                sunset: null,
+                cloudcover: null,
+                uvindex: null
             }, null);
         }
     });
@@ -186,7 +252,12 @@ function weatherparser(lat, lon, callback) {
         visibility: 0,
         forecast: null,
         hourlyForecast: null,
+        minutelyForecast: null,
         insight: null,
+        sunrise: null,
+        sunset: null,
+        cloudcover: null,
+        uvindex: null
     };
 }
 

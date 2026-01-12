@@ -30,9 +30,11 @@ export default function HourlyScreen({ onMenuOpen, onBack, data }) {
         const timePrefix = 'day'; // Default to day; can be enhanced with sunrise/sunset
         
         if (main.includes('clear') || main.includes('sunny')) {
-            return { icon: `${timePrefix}-clear`, condition: 'Clear' };
+            if (main.includes('mostly')) return { icon: `${timePrefix}-clear`, condition: 'Mostly Clear' };
+            else return { icon: `${timePrefix}-clear`, condition: 'Clear' };
         } else if (main.includes('cloud')) {
-            return { icon: `${timePrefix}-cloudy`, condition: 'Cloudy' };
+            if (main.includes('mostly')) return { icon: `${timePrefix}-cloudy`, condition: 'Mostly Cloudy' };
+            else return { icon: `${timePrefix}-cloudy`, condition: 'Cloudy' };
         } else if (main.includes('rain') || main.includes('drizzle')) {
             return { icon: `${timePrefix}-rain`, condition: weather[0].main };
         } else if (main.includes('snow')) {
