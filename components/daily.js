@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView, BackHandler } fro
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { style, wxicons, getIconColor, getContrastYIQ } from '../style';
 import { useTheme } from '../theme';
 
@@ -10,6 +11,7 @@ export default function DailyScreen({ onMenuOpen, onBack, data, coordinates }) {
     const { theme, isDark } = useTheme();
     const styles = style(theme);
     const [spcOutlooks, setSpcOutlooks] = useState({});
+    const [tempUnit, setTempUnit] = useState('fahrenheit');
 
     useEffect(() => {
         const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -19,6 +21,21 @@ export default function DailyScreen({ onMenuOpen, onBack, data, coordinates }) {
 
         return () => backHandler.remove();
     }, [onBack]);
+
+    useEffect(() => {
+        // Load temperature unit preference
+        const loadTempUnit = async () => {
+            try {
+                const savedTempUnit = await AsyncStorage.getItem('tempUnit');
+                if (savedTempUnit !== null) {
+                    setTempUnit(savedTempUnit);
+                }
+            } catch (error) {
+                console.error('Error loading temperature unit:', error);
+            }
+        };
+        loadTempUnit();
+    }, []);
 
     useEffect(() => {
         // Fetch SPC outlooks for days 1-3
@@ -81,6 +98,13 @@ export default function DailyScreen({ onMenuOpen, onBack, data, coordinates }) {
         return inside;
     };
 
+    const convertTemperature = (tempF) => {
+        if (tempUnit === 'celsius') {
+            return Math.round((tempF - 32) * 5 / 9);
+        }
+        return tempF;
+    };
+
     const pointInPolygon = (point, polygon) => {
         if (!Array.isArray(polygon) || polygon.length === 0) return false;
         const inOuter = pointInRing(point, polygon[0]);
@@ -106,10 +130,14 @@ export default function DailyScreen({ onMenuOpen, onBack, data, coordinates }) {
     const getConditionFromText = (weatherText, dayOrNight='day') => {
         const text = (weatherText || '').toLowerCase();
         
+        if (text.includes('showers')){
+            if (text.includes('snow')) return { icon: `${dayOrNight}-snow`, condition: 'Wintry Mix' };
+            return { icon: `${dayOrNight}-rain`, condition: 'Showers' };
+        }
         if (text.includes('rain') && text.includes('snow')) return { icon: `${dayOrNight}-rain`, condition: 'Wintry Mix' };
         if (text.includes('thunderstorm')) return { icon: `${dayOrNight}-thunderstorm`, condition: 'Thunderstorm' };
         if (text.includes('rain')) return { icon: `${dayOrNight}-rain`, condition: 'Rain' };
-        if (text.includes('snow')) return { icon: `${dayOrNight}-snow`, condition: 'Snow' };
+        if (text.includes('snow')) return { icon: `${dayOrNight}-heavysnow`, condition: 'Snow' };
         if (text.includes('sleet')) return { icon: `${dayOrNight}-rain`, condition: 'Sleet' };
         if (text.includes('freezing')) return { icon: `${dayOrNight}-rain`, condition: 'Freezing Rain' };
         if (text.includes('fog') || text.includes('mist')) return { icon: `${dayOrNight}-fog`, condition: 'Fog' };
@@ -178,7 +206,7 @@ export default function DailyScreen({ onMenuOpen, onBack, data, coordinates }) {
             // Nighttime segment
             thisLow = parseInt(forecast.temperature[i]) || 0;
             thisConditionNight = forecast.weather[i];
-            iconNight = getConditionFromText(thisConditionNight).icon;
+            iconNight = getConditionFromText(thisConditionNight, 'night').icon;
             popNight = forecast.pop[i];
         }
 
@@ -251,9 +279,9 @@ export default function DailyScreen({ onMenuOpen, onBack, data, coordinates }) {
                                 <Text style={[styles.wxicons, { fontSize: 24, color: getIconColor(day.iconNight) }]}>
                                     {wxicons(day.iconNight, 'night')}
                                 </Text>
-                                <View style={{ marginLeft: 15 }}>
-                                    <Text style={[localStyles.tempText, { color: theme.primaryText }]}>{day.tempHigh ? day.tempHigh : '--'}°</Text>
-                                    <Text style={[localStyles.tempLowText, { color: theme.secondaryText }]}>{day.tempLow}°</Text>
+                                <View style={{ marginLeft: 15 , alignItems: 'flex-end' }}>
+                                    <Text style={[localStyles.tempText, { color: theme.primaryText }]}>{day.tempHigh ? convertTemperature(day.tempHigh) : '--'}°</Text>
+                                    <Text style={[localStyles.tempLowText, { color: theme.secondaryText }]}>{convertTemperature(day.tempLow)}°</Text>
                                 </View>
                             </View>
                         </View>

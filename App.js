@@ -39,9 +39,8 @@ import RadiosScreen from './components/radios.js';
 import OnboardingScreen from './components/onboarding.js';
 
 
-function getDataFromCondition(condition) {
+function getDataFromCondition(condition, time='day') {
   var id = 'sunny';
-  var time = "day";
   
   // Handle null/undefined condition
   if (!condition) {
@@ -56,12 +55,15 @@ function getDataFromCondition(condition) {
   if (condition.toLowerCase().includes("overcast")) {
     id = "cloudy";
     newCondition = "Overcast";
+  } else if (condition.toLowerCase().includes("partly")) {
+    id = "partlycloudy";
+    newCondition = "Partly Clear";
   } else if (condition.toLowerCase().includes("cloud")) {
     id = "cloudy";
     newCondition = "Cloudy";
-  } else if (condition.toLowerCase().includes("clear") || condition.toLowerCase().includes("sunny")) {
+  } else if (condition.toLowerCase().includes("clear") || condition.toLowerCase().includes("sunny") || condition.toLowerCase().includes("fair")) {
     id = "clear";
-    newCondition = "Clear";
+    newCondition = "Clear sky";
   } else if (condition.toLowerCase().includes("light") && condition.toLowerCase().includes("snow")) {
     id = "snow";
     newCondition = "Light snow";
@@ -82,7 +84,7 @@ function getDataFromCondition(condition) {
     newCondition = "Mist";
   } else if (condition.toLowerCase().includes("thunderstorm") || condition.toLowerCase().includes("storm")) {
     id = "thunderstorm";
-    newCondition = "Thunderstorm";
+    newCondition = "Thunderstorms";
   } else if (condition.toLowerCase().includes("rain")) {
     id = "rain";
     newCondition = "Rain";
@@ -349,6 +351,34 @@ function AppContent() {
     const index = Math.floor((deg / 22.5) + 0.5) % 16;
     return directions[index];
   }
+
+  // Helper function to determine if current time is day or night
+  const getDayOrNight = () => {
+    const parseTime = (timeStr) => {
+      if (!timeStr) return null;
+      const match = timeStr.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+      if (!match) return null;
+      let hours = parseInt(match[1], 10);
+      const minutes = parseInt(match[2], 10);
+      const period = match[3].toUpperCase();
+      if (period === 'PM' && hours !== 12) hours += 12;
+      if (period === 'AM' && hours === 12) hours = 0;
+      return hours * 60 + minutes;
+    };
+
+    const sunriseMinutes = parseTime(data.sunrise);
+    const sunsetMinutes = parseTime(data.sunset);
+    
+    if (sunriseMinutes == null || sunsetMinutes == null) return 'day';
+    
+    const now = new Date();
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    
+    if (currentMinutes >= sunriseMinutes && currentMinutes < sunsetMinutes) {
+      return 'day';
+    }
+    return 'night';
+  };
 
   // Helper functions to get unit symbols
   const getTempUnit = () => tempUnit === 'celsius' ? '°C' : '°F';
@@ -680,9 +710,9 @@ function AppContent() {
         >
 
         <View style={[styles.cardContainer, (open || locationOpen) && { pointerEvents: 'none' }, { paddingHorizontal: 60, flexDirection: 'row', alignItems: 'center' }]}>
-          <Text style={[styles.wxicons, { color: getIconColor(data.condition) }]}>{ getDataFromCondition(data.condition).icon}</Text>
+          <Text style={[styles.wxicons, { color: getIconColor(data.condition) }]}>{ getDataFromCondition(data.condition, getDayOrNight()).icon}</Text>
           <View style={{ marginLeft: 10 }}>
-            <Text style={styles.header}>{getDataFromCondition(data.condition).condition.charAt(0).toUpperCase() + getDataFromCondition(data.condition).condition.slice(1)}</Text>
+            <Text style={styles.header}>{getDataFromCondition(data.condition, getDayOrNight()).condition.charAt(0).toUpperCase() + getDataFromCondition(data.condition, getDayOrNight()).condition.slice(1)}</Text>
             <Text style={[styles.header, { fontSize: 28 }]}>{Math.round(data.temp)}°</Text>
           </View>
         </View>
@@ -738,6 +768,28 @@ function AppContent() {
           <React.Fragment key={index}>{element}</React.Fragment>
         ))}
 
+        {data.forecast && (
+          <TouchableOpacity onPress={() => navigateToScreen('daily')} activeOpacity={0.8}>
+            <View style={[styles.cardContainer, (open || locationOpen) && { pointerEvents: 'none' }]}>
+              <View style={{ flexDirection: 'row', flex: 1, justifyContent: 'space-between', alignItems: 'center' }}>
+                <View>
+                  <Text style={[styles.header, { fontSize: 18, marginBottom: 5 }]}>{getDayOrNight() === 'day' ? "Later today" : "Later tonight"}</Text>
+                  <Text style={[styles.text, { color: theme.secondaryText }]}>
+                    {data.forecast.data ? data.forecast.time.tempLabel[0] === "High" ? `${data.forecast.data.temperature[0]}°` : '--°' : '--°'}
+                    {' / '}
+                    {data.forecast.data ? data.forecast.time.tempLabel[0] === "High" ? `${data.forecast.data.temperature[1]}°` : `${data.forecast.data.temperature[0]}°` : '--°'}
+                  </Text>
+                </View>
+                <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={[styles.wxicons, { fontSize: 48, color: getIconColor(data.condition) }]}>
+                    {getDataFromCondition(data.condition, getDayOrNight()).icon}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </TouchableOpacity>
+        )}
+
         {(() => {
           if (!data.minutelyForecast || data.minutelyForecast.length === 0) return null;
 
@@ -757,30 +809,32 @@ function AppContent() {
           const end = new Date(now.getTime() + 60 * 60 * 1000);
           
           return (
-            <View style={[styles.cardContainer, (open || locationOpen) && { pointerEvents: 'none' }]}>
-              <View style={{ width: '100%' }}>
-                <Text style={[styles.header, { fontSize: 18, marginBottom: 10 }]}>Precipitation next 60 min</Text>
-                <View style={{ width: '100%', flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-around', height: 60, flexWrap: 'nowrap' }}>
-                  {bars.map((height, index) => (
-                    <View key={index} style={{ alignItems: 'center', flex: 1, maxWidth: '1.66%' }}>
-                      <View 
-                        style={{ 
-                          width: '90%', 
-                          backgroundColor: height < 22 ? '#444444' : height < 44 ? '#2a7fff' : '#27beff', 
-                          height, 
-                          borderRadius: 6,
-                        }} 
-                      />
-                    </View>
-                  ))}
-                </View>
-                <View style={{ display: 'flex', justifyContent: 'space-between', flexDirection: 'row', alignItems: 'center', marginTop: 10 }}>
-                  <Text style={styles.text}>{now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}</Text>
-                  <Text style={styles.text}>{mid.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}</Text>
-                  <Text style={styles.text}>{end.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}</Text>
+            <TouchableOpacity onPress={() => navigateToScreen('hourly')} activeOpacity={0.8}>
+              <View style={[styles.cardContainer, (open || locationOpen) && { pointerEvents: 'none' }]}>
+                <View style={{ width: '100%' }}>
+                  <Text style={[styles.header, { fontSize: 18, marginBottom: 10 }]}>Precipitation next 60 min</Text>
+                  <View style={{ width: '100%', flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-around', height: 60, flexWrap: 'nowrap' }}>
+                    {bars.map((height, index) => (
+                      <View key={index} style={{ alignItems: 'center', flex: 1, maxWidth: '1.66%' }}>
+                        <View 
+                          style={{ 
+                            width: '90%', 
+                            backgroundColor: height < 22 ? '#444444' : height < 44 ? '#2a7fff' : '#27beff', 
+                            height, 
+                            borderRadius: 6,
+                          }} 
+                        />
+                      </View>
+                    ))}
+                  </View>
+                  <View style={{ display: 'flex', justifyContent: 'space-between', flexDirection: 'row', alignItems: 'center', marginTop: 10 }}>
+                    <Text style={styles.text}>{now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}</Text>
+                    <Text style={styles.text}>{mid.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}</Text>
+                    <Text style={styles.text}>{end.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}</Text>
+                  </View>
                 </View>
               </View>
-            </View>
+            </TouchableOpacity>
           );
         })()}
 
@@ -803,32 +857,34 @@ function AppContent() {
           if (!precipData.some(prob => prob > 30)) return null;
           
           return (
-            <View style={[styles.cardContainer, (open || locationOpen) && { pointerEvents: 'none' }]}>
-              <View>
-                <View style={{ width: '100%' }}>
-                  <Text style={[styles.header, { fontSize: 18, marginBottom: 10 }]}>Precipitation next 24hr</Text>
-                  <View style={{ width: '100%', flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-around', height: 50, flexWrap: 'nowrap' }}>
-                    {precipData.map((prob, index) => (
-                      <View key={index} style={{ alignItems: 'center', flex: 1, maxWidth: '4.16%' }}>
-                        <View 
-                          style={{ 
-                            width: '90%', 
-                            backgroundColor: prob < 17 ? '#444444' : prob < 34 ? '#2a7fff' : '#27beff', 
-                            height: prob/2, 
-                            borderRadius: 10,
-                          }} 
-                        />
-                      </View>
-                    ))}
-                  </View>
-                    <View style={{ display: 'flex', justifyContent: 'space-between', flexDirection: 'row', alignItems: 'center', marginTop: 10 }}>
-                      <Text style={styles.text}>{new Date().toLocaleTimeString('en-US', { hour: 'numeric', hour12: true })}</Text>
-                      <Text style={styles.text}>{new Date(new Date().getTime() + 12 * 60 * 60 * 1000).toLocaleTimeString('en-US', { hour: 'numeric', hour12: true })}</Text>
-                      <Text style={styles.text}>{new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toLocaleTimeString('en-US', { hour: 'numeric', hour12: true })}</Text>
+            <TouchableOpacity onPress={() => navigateToScreen('hourly')} activeOpacity={0.8}>
+              <View style={[styles.cardContainer, (open || locationOpen) && { pointerEvents: 'none' }]}>
+                <View>
+                  <View style={{ width: '100%' }}>
+                    <Text style={[styles.header, { fontSize: 18, marginBottom: 10 }]}>Precipitation next 24hr</Text>
+                    <View style={{ width: '100%', flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-around', height: 50, flexWrap: 'nowrap' }}>
+                      {precipData.map((prob, index) => (
+                        <View key={index} style={{ alignItems: 'center', flex: 1, maxWidth: '4.16%' }}>
+                          <View 
+                            style={{ 
+                              width: '90%', 
+                              backgroundColor: prob < 17 ? '#444444' : prob < 34 ? '#2a7fff' : '#27beff', 
+                              height: prob/2, 
+                              borderRadius: 10,
+                            }} 
+                          />
+                        </View>
+                      ))}
                     </View>
+                      <View style={{ display: 'flex', justifyContent: 'space-between', flexDirection: 'row', alignItems: 'center', marginTop: 10 }}>
+                        <Text style={styles.text}>{new Date().toLocaleTimeString('en-US', { hour: 'numeric', hour12: true })}</Text>
+                        <Text style={styles.text}>{new Date(new Date().getTime() + 12 * 60 * 60 * 1000).toLocaleTimeString('en-US', { hour: 'numeric', hour12: true })}</Text>
+                        <Text style={styles.text}>{new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toLocaleTimeString('en-US', { hour: 'numeric', hour12: true })}</Text>
+                      </View>
+                  </View>
                 </View>
               </View>
-            </View>
+            </TouchableOpacity>
           );
         })()}
 
