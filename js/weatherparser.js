@@ -89,7 +89,7 @@ function weatherparser(lat, lon, callback, units = {}) {
                 data.pop.push(day.pop ? Math.round(day.pop * 100).toString() : "0");
                 data.weather.push(day.weather[0].main);
                 data.iconLink.push(`https://openweathermap.org/img/wn/${day.weather[0].icon}@2x.png`);
-                data.text.push(day.weather[0].description);
+                data.text.push('owmdata');
                 
                 // Night period
                 time.startPeriodName.push(dayName + " Night");
@@ -99,7 +99,7 @@ function weatherparser(lat, lon, callback, units = {}) {
                 data.pop.push(day.pop ? Math.round(day.pop * 100).toString() : "0");
                 data.weather.push(day.weather[0].main);
                 data.iconLink.push(`https://openweathermap.org/img/wn/${day.weather[0].icon}@2x.png`);
-                data.text.push(day.weather[0].description);
+                data.text.push('owmdata');
             });
         }
         
@@ -141,7 +141,8 @@ function weatherparser(lat, lon, callback, units = {}) {
             sunrise: owmData?.current?.sunrise ? new Date(owmData.current.sunrise * 1000).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : null,
             sunset: owmData?.current?.sunset ? new Date(owmData.current.sunset * 1000).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : null,
             cloudcover: owmData?.current?.clouds || 0,
-            uvindex: owmData?.current?.uvi || 0
+            uvindex: owmData?.current?.uvi || 0,
+            lastUpdated: nwsConditions.creationDateLocal || new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString()
         }
         
         // Determine daily forecast: NWS first, OWM fallback

@@ -130,12 +130,13 @@ export default function DailyScreen({ onMenuOpen, onBack, data, coordinates }) {
     const getConditionFromText = (weatherText, dayOrNight='day') => {
         const text = (weatherText || '').toLowerCase();
         
-        if (text.includes('showers')){
-            if (text.includes('snow')) return { icon: `${dayOrNight}-snow`, condition: 'Wintry Mix' };
+        if (text.includes('showers')) {
+            if (text.includes('snow')) return { icon: `${dayOrNight}-snow`, condition: 'Snow Showers' };
             return { icon: `${dayOrNight}-rain`, condition: 'Showers' };
         }
+        if (text.includes('flurries')) return { icon: `${dayOrNight}-snow`, condition: 'Light Snow Showers' };
         if (text.includes('rain') && text.includes('snow')) return { icon: `${dayOrNight}-rain`, condition: 'Wintry Mix' };
-        if (text.includes('thunderstorm')) return { icon: `${dayOrNight}-thunderstorm`, condition: 'Thunderstorm' };
+        if (text.includes('storm')) return { icon: `${dayOrNight}-thunderstorm`, condition: 'Thunderstorms' };
         if (text.includes('rain')) return { icon: `${dayOrNight}-rain`, condition: 'Rain' };
         if (text.includes('snow')) return { icon: `${dayOrNight}-heavysnow`, condition: 'Snow' };
         if (text.includes('sleet')) return { icon: `${dayOrNight}-rain`, condition: 'Sleet' };
@@ -190,6 +191,7 @@ export default function DailyScreen({ onMenuOpen, onBack, data, coordinates }) {
     var popNight = null;
     var dayIndex = 0;
     var first = true;
+    var thisDesc = null;
     
     for (let i = 0; i < daysToShow; i++) {
         // Use tempLabel to determine if this is a High or Low period
@@ -201,6 +203,7 @@ export default function DailyScreen({ onMenuOpen, onBack, data, coordinates }) {
             thisConditionDay = forecast.weather[i];
             iconDay = getConditionFromText(thisConditionDay).icon;
             popDay = forecast.pop[i];
+            if (forecast.text[i] !== 'owmdata') { thisDesc = forecast.text[i]; }
             continue; // Loop to next iteration to find the night segment
         } else {
             // Nighttime segment
@@ -208,6 +211,7 @@ export default function DailyScreen({ onMenuOpen, onBack, data, coordinates }) {
             thisConditionNight = forecast.weather[i];
             iconNight = getConditionFromText(thisConditionNight, 'night').icon;
             popNight = forecast.pop[i];
+            if (!thisDesc && forecast.text[i] !== 'owmdata') { thisDesc = forecast.text[i]; }
         }
 
         const date = new Date(forecasttime.startValidTime[i]);
@@ -227,6 +231,7 @@ export default function DailyScreen({ onMenuOpen, onBack, data, coordinates }) {
             popDay: (popDay !== null && popDay !== undefined) ? popDay : '0',
             popNight: (popNight !== null && popNight !== undefined) ? popNight : '0',
             spcOutlook: dayIndex < 3 ? spcOutlooks[dayIndex] : null,
+            description: thisDesc,
         });
         
         dayIndex++;
@@ -239,6 +244,7 @@ export default function DailyScreen({ onMenuOpen, onBack, data, coordinates }) {
         iconNight = null;
         popDay = null;
         popNight = null;
+        thisDesc = null;
     }
 
     return (
@@ -280,8 +286,8 @@ export default function DailyScreen({ onMenuOpen, onBack, data, coordinates }) {
                                     {wxicons(day.iconNight, 'night')}
                                 </Text>
                                 <View style={{ marginLeft: 15 , alignItems: 'flex-end' }}>
-                                    <Text style={[localStyles.tempText, { color: theme.primaryText }]}>{day.tempHigh ? convertTemperature(day.tempHigh) : '--'}°</Text>
-                                    <Text style={[localStyles.tempLowText, { color: theme.secondaryText }]}>{convertTemperature(day.tempLow)}°</Text>
+                                    <Text style={[localStyles.tempText, { color: theme.primaryText }]}>{day.tempHigh !== undefined ? convertTemperature(day.tempHigh) : '--'}°</Text>
+                                    <Text style={[localStyles.tempLowText, { color: theme.secondaryText }]}>{day.tempLow !== undefined ? convertTemperature(day.tempLow) : '--'}°</Text>
                                 </View>
                             </View>
                         </View>
@@ -293,6 +299,10 @@ export default function DailyScreen({ onMenuOpen, onBack, data, coordinates }) {
                                 <Text style={[localStyles.detailText, { color: theme.secondaryText }]}>{day.popDay}% / {day.popNight}%</Text>
                             </View>
                         </View>
+
+                        {day.description && <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignContent: 'center', marginBottom: 0 }}>
+                            <Text style={[localStyles.conditionDescription, { color: theme.secondaryText }]}>{day.description}</Text>
+                        </View>}
 
                         {day.spcOutlook && getSpcIndex(day.spcOutlook.label) > 0 && (
                             <View style={[localStyles.spcSection, { backgroundColor: day.spcOutlook.fill, borderColor: day.spcOutlook.stroke }]}>
@@ -345,6 +355,11 @@ const localStyles = StyleSheet.create({
     conditionText: {
         fontSize: 16,
         marginBottom: 0,
+    },
+    conditionDescription: {
+        fontSize: 12,
+        marginBottom: 0,
+        marginTop: 4,
     },
     detailsSection: {
         flexDirection: 'row',

@@ -123,18 +123,73 @@ function wxicons(id) {
 }
 
 function getIconColor (icon) {
-    if (icon === undefined || icon === null) return '#ffaa00';
+    if (icon === undefined || icon === null) return '#ffcc00';
     const lower = icon.toString().toLowerCase();
     if (lower.includes('partly')) return '#c59e00ff';
-    if (lower.includes('clear')) return '#ffcc00';
+    if (lower.includes('clear') || lower.includes('sunny') || lower.includes('fair')) return '#ffcc00';
     if (lower.includes('cloud') || lower.includes('overcast')) return '#888888';
-    if (lower.includes('snow')) return '#00d4ff';
-    if (lower.includes('rain') || lower.includes('drizzle')) return '#2a7fff';
-    if (lower.includes('thunderstorm')) return '#333333';
+    if (lower.includes('snow') || lower.includes('flurries')) return '#00d4ff';
+    if (lower.includes('rain') || lower.includes('drizzle') || lower.includes('shower')) return '#2a7fff';
+    if (lower.includes('storm')) return '#ff2121';
     if (lower.includes('fog') || lower.includes('haze') || lower.includes('mist')) return '#999999';
     if (lower.includes('clear')) return '#8400ff';
-    return '#ffaa00';
+    return '#ffcc00';
 };
+
+function alertcolor(alert) {
+    // From SparkRadar
+    const defaultAlerts = {
+        "Air Quality Alert":
+            { enabled: true, color: "#768b00", border: "#768b00", flash: null },
+        "Avalanche Warning":
+            { enabled: true, color: "#ff00ff", border: "#ff00ff", flash: null },
+        "Dust Advisory":
+            { enabled: true, color: "#706e00", border: "#706e00", flash: null },
+        "Dust Storm Warning":
+            { enabled: true, color: "#776b00", border: "#776b00", flash: null },
+        "Flash Flood Emergency":
+            { enabled: true, color: "#00ff00", border: "#00ff00", flash: "#00b600" },
+        "Flash Flood Warning":
+            { enabled: true, color: "#00ff00", border: "#00ff00", flash: null },
+        "Flood Advisory":
+            { enabled: true, color: "#00538b", border: "#00538b", flash: null },
+        "Flood Warning":
+            { enabled: true, color: "#1E90FF", border: "#1E90FF", flash: null },
+        "Flood Watch":
+            { enabled: true, color: "#60fd82", border: "#60fd82", flash: null },
+        "Marine Weather Statement":
+            { enabled: true, color: "#690083", border: "#690083", flash: null },
+        "PDS Tornado Warning":
+            { enabled: true, color: "#e900dd", border: "#e900dd", flash: "#e90000" },
+        "Severe Thunderstorm Warning":
+            { enabled: true, color: "#f1a500", border: "#f1a500", flash: null },
+        "Snow Squall Warning":
+            { enabled: true, color: "#0096aa", border: "#0096aa", flash: null },
+        "Special Marine Warning":
+            { enabled: true, color: "#8b3300", border: "#8b3300", flash: null },
+        "Special Weather Statement":
+            { enabled: true, color: "#eeff00", border: "#eeff00", flash: null },
+        "Tornado Emergency":
+            { enabled: true, color: "#9f00e9", border: "#9f00e9", flash: "#e900dd" },
+        "Tornado Warning":
+            { enabled: true, color: "#e90000", border: "#e90000", flash: null },
+        "Tropical Storm Watch":
+            { enabled: true, color: "#3f0072", border: "#3f0072", flash: null },
+    };
+    if (alert in defaultAlerts) {
+        return defaultAlerts[alert]["color"];
+    } else {
+        if (alert.toLowerCase().includes("tornado")) {
+            return "#da1990";
+        } else if (alert.toLowerCase().includes("warning")) {
+            return "#ff2121";
+        } else if (alert.toLowerCase().includes("watch")) {
+            return "#ff7e00";
+        } else {
+            return "#ffff00";
+        }
+    }
+}
 
 // Contrast formula
 function getContrastYIQ(hexcolor) {
@@ -154,5 +209,5 @@ function getContrastYIQ(hexcolor) {
 
 // Exports
 module.exports = {
-    style, wxicons, getIconColor, getContrastYIQ
+    style, wxicons, getIconColor, getContrastYIQ, alertcolor
 };

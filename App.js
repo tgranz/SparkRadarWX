@@ -19,7 +19,7 @@ import { WebView } from 'react-native-webview';
 import * as Location from 'expo-location';
 import Svg, { Circle } from 'react-native-svg';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { style, wxicons, getIconColor, getContrastYIQ } from './style';
+import { style, wxicons, alertcolor, getIconColor, getContrastYIQ } from './style';
 import { useTheme } from './theme';
 import weatherparser from './js/weatherparser.js';
 import Toast from 'react-native-toast-message';
@@ -67,12 +67,24 @@ function getDataFromCondition(condition, time='day') {
   } else if (condition.toLowerCase().includes("light") && condition.toLowerCase().includes("snow")) {
     id = "snow";
     newCondition = "Light snow";
+  } else if (condition.toLowerCase().includes("flurries")) {
+    id = "snow";
+    newCondition = "Light snow";
   } else if (condition.toLowerCase().includes("heavy") && condition.toLowerCase().includes("snow")) {
     id = "snow";
     newCondition = "Heavy snow";
   } else if (condition.toLowerCase().includes("snow")) {
     id = "heavysnow";
     newCondition = "Snow";
+  } else if (condition.toLowerCase().includes("thunderstorm") || condition.toLowerCase().includes("storm")) {
+    id = "thunderstorm";
+    newCondition = "Thunderstorms";
+  } else if (condition.toLowerCase().includes("rain") || condition.toLowerCase().includes("shower")) {
+    id = "rain";
+    newCondition = "Rain";
+  } else if (condition.toLowerCase().includes("drizzle")) {
+    id = "rain";
+    newCondition = "Light Rain";
   } else if (condition.toLowerCase().includes("haze")) {
     id = "haze";
     newCondition = "Haze";
@@ -82,15 +94,6 @@ function getDataFromCondition(condition, time='day') {
   } else if (condition.toLowerCase().includes("mist")) {
     id = "mist";
     newCondition = "Mist";
-  } else if (condition.toLowerCase().includes("thunderstorm") || condition.toLowerCase().includes("storm")) {
-    id = "thunderstorm";
-    newCondition = "Thunderstorms";
-  } else if (condition.toLowerCase().includes("rain")) {
-    id = "rain";
-    newCondition = "Rain";
-  } else if (condition.toLowerCase().includes("drizzle")) {
-    id = "rain";
-    newCondition = "Light Rain";
   }
 
   return {
@@ -521,19 +524,8 @@ function AppContent() {
       var thiscolor = "#ff2121";
       var thisTextColor = "#ffffff";
 
-      if (alert.properties.event.toLowerCase().includes("tornado")) {
-        thiscolor = "#da1990ff";
-        thisTextColor = "#ffffff";
-      } else if (alert.properties.event.toLowerCase().includes("warning")) {
-        thiscolor = "#ff2121";
-        thisTextColor = "#ffffff";
-      } else if (alert.properties.event.toLowerCase().includes("watch")) {
-        thiscolor = "#ff7e00";
-        thisTextColor = "#000000";
-      } else {
-        thiscolor = "#ffff00";
-        thisTextColor = "#000000";
-      }
+      thiscolor = alertcolor(alert.properties.event);
+      thisTextColor = getContrastYIQ(thiscolor);
 
       var formattedDate = "";
       if (alert.properties.expires) {
@@ -674,7 +666,7 @@ function AppContent() {
         <LinearGradient colors={[theme.gradientStart, theme.gradientEnd]} style={[styles.gradientBackground, { zIndex: 1 }]} >
 
         <StatusBar style="auto" />
-        <View style={[styles.headerContainer, (open || locationOpen) && { pointerEvents: 'none' }]}>
+        <View style={[styles.headerContainer, {marginBottom: 5}, (open || locationOpen) && { pointerEvents: 'none' }]}>
           <View style={styles.side}>
             <TouchableOpacity onPress={() => { setOpen(true); }}>
               <MaterialIcons name="menu" size={35} color={theme.iconColor} />
@@ -683,7 +675,7 @@ function AppContent() {
 
           <TouchableOpacity style={styles.titleContainer} onPress={() => setLocationOpen(true)}>
             <View style={styles.titleContainer}>
-              <Text style={styles.header}>{ data.station ? data.station : locationName }</Text>
+              <Text style={styles.header}>{ locationName ? locationName : data.station }</Text>
               <Text style={styles.text}>{data.station}</Text>
             </View>
           </TouchableOpacity>
@@ -781,8 +773,8 @@ function AppContent() {
                   </Text>
                 </View>
                 <View style={{ alignItems: 'center', justifyContent: 'center' }}>
-                  <Text style={[styles.wxicons, { fontSize: 48, color: getIconColor(data.condition) }]}>
-                    {getDataFromCondition(data.condition, getDayOrNight()).icon}
+                  <Text style={[styles.wxicons, { fontSize: 48, color: getIconColor(data.forecast.data.weather[0]) }]}>
+                    {getDataFromCondition(data.forecast.data.weather[0], getDayOrNight()).icon}
                   </Text>
                 </View>
               </View>
@@ -909,7 +901,7 @@ function AppContent() {
                 <MaterialIcons name="speed" size={24} color={theme.weatherIconPrimary} />
                 <View>
                   <Text style={styles.text}>Wind Speed</Text>
-                  <Text style={[styles.text, { fontWeight: 'bold' }]}>{Math.round(data.wind_speed)} {getSpeedUnit()}</Text>
+                  <Text style={[styles.text, { fontWeight: 'bold' }]}>{ data.wind_speed == 0 ? 'Calm' : `${Math.round(data.wind_speed)} ${getSpeedUnit()}`}</Text>
                 </View>
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -939,7 +931,7 @@ function AppContent() {
                 <MaterialIcons name="wind-power" size={24} color={theme.weatherIconPrimary} />
                 <View>
                   <Text style={styles.text}>Wind Direction</Text>
-                  <Text style={[styles.text, { fontWeight: 'bold' }]}>{ degToCardinal(Math.round(data.wind_direction))} ({Math.round(data.wind_direction)}°)</Text>
+                  <Text style={[styles.text, { fontWeight: 'bold' }]}>{ data.wind_direction == 999 ? "Variable" : data.wind_direction == 0 ? "N/A" : `${degToCardinal(Math.round(data.wind_direction))} (${Math.round(data.wind_direction)}°)`}</Text>
                 </View>
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -960,7 +952,7 @@ function AppContent() {
             activeOpacity={0.8}
           >
             <WebView
-              source={{ uri: `https://sparkradar.app?mode=preview&lat=${coordinates.lat}&lon=${coordinates.lon}` }}
+              source={{ uri: `https://sparkradar.app?mode=preview&zoom=7&lat=${coordinates.lat}&lon=${coordinates.lon}` }}
               style={{ flex: 1 }}
               pointerEvents="none"
               scrollEnabled={false}
@@ -990,14 +982,14 @@ function AppContent() {
                   const sunriseMinutes = parseTime(data.sunrise);
                   const sunsetMinutes = parseTime(data.sunset);
                   
-                  if (sunriseMinutes == null || sunsetMinutes == null) return { x: 100, y: 15 };
+                  if (sunriseMinutes == null || sunsetMinutes == null) return { x: 15, y: 100 };
                   
                   const now = new Date();
                   const currentMinutes = now.getHours() * 60 + now.getMinutes();
                   const clampedMinutes = Math.max(sunriseMinutes, Math.min(sunsetMinutes, currentMinutes));
                   
                   const ratio = (clampedMinutes - sunriseMinutes) / (sunsetMinutes - sunriseMinutes);
-                  const angle = ratio * 180;
+                  const angle = 180 - (ratio * 180);
                   const radians = angle * Math.PI / 180;
                   
                   const x = 100 + 85 * Math.cos(radians);
@@ -1048,7 +1040,8 @@ function AppContent() {
           </View>
         )}
 
-        <Text style={[ styles.text, { textAlign: 'center', marginTop: 10, marginBottom: 30 }]}>Source: NWS and OpenWeatherMap</Text>
+        <Text style={[ styles.text, { textAlign: 'center', marginTop: 10, marginBottom: 10 }]}>Source: NWS and OpenWeatherMap</Text>
+        <Text style={[ styles.text, { textAlign: 'center', marginTop: 10, marginBottom: 30 }]}>{data.lastUpdated ? `Last updated: ${data.lastUpdated}` : ""}</Text>
 
         </ScrollView>
 

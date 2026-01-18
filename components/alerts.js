@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, BackHandler } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { style } from '../style';
+import { style, alertcolor, getContrastYIQ } from '../style';
 import { useTheme } from '../theme';
 
 const convertIsoToLocal = (isoString) => {
@@ -79,22 +79,8 @@ export default function AlertsScreen({ onBack, alerts }) {
                         effective = effectiveLocal;
                         expires = expiresLocal;
 
-                        var thiscolor = "#ff2121";
-                        var thisTextColor = "#ffffff";
-
-                        if (p.event.toLowerCase().includes("tornado")) {
-                            thiscolor = "#da1990ff";
-                            thisTextColor = "#ffffff";
-                        } else if (p.event.toLowerCase().includes("warning")) {
-                            thiscolor = "#ff2121";
-                            thisTextColor = "#ffffff";
-                        } else if (p.event.toLowerCase().includes("watch")) {
-                            thiscolor = "#ff7e00";
-                            thisTextColor = "#000000";
-                        } else {
-                            thiscolor = "#ffff00";
-                            thisTextColor = "#000000";
-                        }
+                        var thiscolor = alertcolor(event);
+                        var thisTextColor = getContrastYIQ(thiscolor);
 
                         return (
                             <View key={idx} style={[styles.cardContainer, { paddingHorizontal: 10, alignItems: 'flex-start', flexDirection: 'column' }]}>
