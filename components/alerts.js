@@ -69,9 +69,12 @@ export default function AlertsScreen({ onBack, alerts }) {
                         var area = p.areaDesc || '';
                         var effective = p.effective || '';
                         var expires = p.expires || '';
+                        var instruction = p.instruction || '';
 
                         desc = desc.replace(/\n\n/g, '\n'); // Double newlines to single
                         desc = desc.replace(/\n/g, ' '); // Remove newlines for better display
+                        instruction = instruction.replace(/\n\n/g, '\n'); // Double newlines to single
+                        instruction = instruction.replace(/\n/g, ' '); // Remove newlines for better display
 
                         var effectiveLocal = effective ? convertIsoToLocal(effective) : '';
                         var expiresLocal = expires ? convertIsoToLocal(expires) : '';
@@ -93,6 +96,7 @@ export default function AlertsScreen({ onBack, alerts }) {
                                 {expires ? (<Text style={[styles.text, { marginBottom: 10, fontWeight: 'bold' }]}>Expires: {expires}</Text>) : null}
                                 {area ? (<Text style={[styles.text, { marginBottom: 10 }]}>{area}</Text>) : null}
                                 {desc ? (<Text style={[styles.text]}>{desc}</Text>) : null}
+                                {instruction ? (<Text style={[styles.text, { marginTop: 10, fontWeight: 'bold' }]}>{instruction}</Text>) : null}
                             </View>
                         );
                     })}

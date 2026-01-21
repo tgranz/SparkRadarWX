@@ -31,6 +31,7 @@ export default function HourlyScreen({ onMenuOpen, onBack, data }) {
         
         if (main.includes('clear') || main.includes('sunny')) {
             if (main.includes('mostly')) return { icon: `${timePrefix}-clear`, condition: 'Mostly Clear' };
+            else if (main.includes('partly')) return { icon: `${timePrefix}-partlycloudy`, condition: 'Partly Cloudy' };
             else return { icon: `${timePrefix}-clear`, condition: 'Clear' };
         } else if (main.includes('cloud')) {
             if (main.includes('mostly')) return { icon: `${timePrefix}-cloudy`, condition: 'Mostly Cloudy' };
