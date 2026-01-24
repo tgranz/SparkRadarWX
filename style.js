@@ -138,6 +138,7 @@ function getIconColor (icon) {
 
 function alertcolor(alert) {
     // From SparkRadar
+    // To migrate to OneCall API later
     const defaultAlerts = {
         "Air Quality Alert":
             { enabled: true, color: "#768b00", border: "#768b00", flash: null },
@@ -175,6 +176,14 @@ function alertcolor(alert) {
             { enabled: true, color: "#e90000", border: "#e90000", flash: null },
         "Tropical Storm Watch":
             { enabled: true, color: "#3f0072", border: "#3f0072", flash: null },
+        "Ice Storm Warning":
+            { enabled: true, color: "#00ffff", border: "#00ffff", flash: null },
+        "Winter Storm Warning":
+            { enabled: true, color: "#0099ff", border: "#0099ff", flash: null },
+        "Winter Storm Watch":
+            { enabled: true, color: "#0066cc", border: "#0066cc", flash: null },
+        "Winter Weather Advisory":
+            { enabled: true, color: "#004c99", border: "#004c99", flash: null },
     };
     if (alert in defaultAlerts) {
         return defaultAlerts[alert]["color"];
