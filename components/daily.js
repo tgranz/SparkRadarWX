@@ -10,7 +10,6 @@ import { useTheme } from '../theme';
 export default function DailyScreen({ onMenuOpen, onBack, data, coordinates }) {
     const { theme, isDark } = useTheme();
     const styles = style(theme);
-    const [spcOutlooks, setSpcOutlooks] = useState({});
     const [tempUnit, setTempUnit] = useState('fahrenheit');
 
     useEffect(() => {
@@ -37,73 +36,7 @@ export default function DailyScreen({ onMenuOpen, onBack, data, coordinates }) {
         loadTempUnit();
     }, []);
 
-    useEffect(() => {
-        // Fetch SPC outlooks for days 1-3
-        if (coordinates?.lat && coordinates?.lon) {
-            fetchSpcOutlooks(coordinates.lat, coordinates.lon);
-        }
-    }, [coordinates]);
 
-    const fetchSpcOutlooks = async (lat, lon) => {
-        const outlooks = {};
-        const days = ['day1otlk_cat', 'day2otlk_cat', 'day3otlk_cat'];
-        
-        for (let i = 0; i < days.length; i++) {
-            try {
-                const response = await fetch(`https://www.spc.noaa.gov/products/outlook/${days[i]}.nolyr.geojson`);
-                const json = await response.json();
-                const point = [lon, lat];
-                let bestFeature = null;
-
-                json.features?.forEach((feature) => {
-                    if (!feature?.geometry || !feature?.properties) return;
-                    const { geometry, properties } = feature;
-
-                    const checkPolygon = (polyCoords) => {
-                        if (pointInPolygon(point, polyCoords)) {
-                            if (!bestFeature || (properties.DN ?? 0) > (bestFeature.properties.DN ?? 0)) {
-                                bestFeature = feature;
-                            }
-                        }
-                    };
-
-                    if (geometry.type === 'Polygon') {
-                        checkPolygon(geometry.coordinates);
-                    } else if (geometry.type === 'MultiPolygon') {
-                        geometry.coordinates.forEach((poly) => checkPolygon(poly));
-                    }
-                });
-
-                if (bestFeature) {
-                    const { LABEL, LABEL2, fill, stroke } = bestFeature.properties;
-                    outlooks[i] = { label: LABEL, description: LABEL2.replace(" Risk", ""), fill, stroke };
-                }
-            } catch (err) {
-                console.error(`Error fetching SPC day ${i + 1} outlook:`, err);
-            }
-        }
-        
-        setSpcOutlooks(outlooks);
-    };
-
-    const pointInRing = (point, ring) => {
-        const [px, py] = point;
-        let inside = false;
-        for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-            const [xi, yi] = ring[i];
-            const [xj, yj] = ring[j];
-            const intersect = yi > py !== yj > py && px < ((xj - xi) * (py - yi)) / (yj - yi) + xi;
-            if (intersect) inside = !inside;
-        }
-        return inside;
-    };
-
-    const convertTemperature = (tempF) => {
-        if (tempUnit === 'celsius') {
-            return Math.round((tempF - 32) * 5 / 9);
-        }
-        return tempF;
-    };
 
     const pointInPolygon = (point, polygon) => {
         if (!Array.isArray(polygon) || polygon.length === 0) return false;
@@ -115,8 +48,15 @@ export default function DailyScreen({ onMenuOpen, onBack, data, coordinates }) {
         return true;
     };
 
-    const getSpcIndex = (label) => {
-        switch (label) {
+    const convertTemperature = (tempF) => {
+        if (tempUnit === 'celsius') {
+            return Math.round((tempF - 32) * 5 / 9);
+        }
+        return tempF;
+    };
+
+    const getSpcIndex = (level) => {
+        switch (level) {
             case 'MRGL': return '1';
             case 'SLGT': return '2';
             case 'ENH': return '3';
@@ -190,6 +130,15 @@ export default function DailyScreen({ onMenuOpen, onBack, data, coordinates }) {
         const conditionStr = day.condition?.condition || day.condition || 'Clear';
         const nightConditionStr = day.night?.condition?.condition || day.night?.condition || conditionStr;
         
+        // Get SPC outlook from API data if available
+        const spcData = data.forecasts?.spc?.[index];
+        const spcOutlook = spcData && spcData.level && spcData.level !== 'NONE' && spcData.level !== 'TSTM' ? {
+            label: spcData.level,
+            description: spcData.description,
+            fill: spcData.color,
+            stroke: spcData.altcolor,
+        } : null;
+
         dailyData.push({
             date: date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
             dayName: isToday ? "Today" : date.toLocaleDateString('en-US', { weekday: 'long' }),
@@ -200,7 +149,7 @@ export default function DailyScreen({ onMenuOpen, onBack, data, coordinates }) {
             condition: conditionStr,
             popDay: day.precipitation_probability !== null ? Math.round((day.precipitation_probability || 0)) : 0,
             popNight: day.night?.precipitation_probability !== null ? Math.round((day.night?.precipitation_probability || 0)) : 0,
-            spcOutlook: index < 3 ? spcOutlooks[index] : null,
+            spcOutlook: spcOutlook,
             description: day.description || null,
         });
     });

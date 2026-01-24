@@ -265,48 +265,56 @@ function AppContent() {
     setLoading(true);
     const startTime = Date.now();
 
-    // Set a timeout to hide loading spinner after 3 seconds
+    // Set a timeout to hide loading spinner after 5 seconds
     const loadingTimeout = setTimeout(() => {
       setLoading(false);
       setRefreshing(false);
-    }, 3000);
+    }, 5000);
 
-    // Create an AbortController for fetch timeout (20 seconds)
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 20000);
+    const url = `https://onecall.sparkradar.app/onecall?lat=${lat}&lon=${lon}&key=${ONECALL_API_KEY}`;
 
-    // Fetch from OneCall API
-    fetch(`https://onecall.sparkradar.app/onecall?lat=${lat}&lon=${lon}&key=${ONECALL_API_KEY}`, {
-      signal: controller.signal,
+    console.log('Fetching weather data from', url);
+    console.log('Fetch start time:', new Date().toISOString());
+
+    fetch(url, {
+      method: 'GET',
+      headers: {
+        'User-Agent': 'SparkRadarWX/1.0',
+        'Accept': 'application/json',
+        'Connection': 'close',
+      },
     })
-      .then(response => response.json())
+      .then(response => {
+        const elapsed = Date.now() - startTime;
+        console.log('Fetch response received in', elapsed, 'ms, status:', response.status);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        return response.json();
+      })
       .then(apiData => {
-        clearTimeout(timeoutId);
-        console.log('Fetched weather data in', Date.now() - startTime, 'ms');
+        const elapsed = Date.now() - startTime;
+        console.log('Weather data parsed in', elapsed, 'ms');
+        console.log('Data keys:', Object.keys(apiData));
+        
         setData(convertData(apiData.data));
         clearTimeout(loadingTimeout);
         setLoading(false);
         setRefreshing(false);
       })
       .catch(error => {
-        clearTimeout(timeoutId);
-        if (error.name === 'AbortError') {
-          console.warn('Weather data request timed out after 20 seconds');
-          Toast.show({
-            type: 'error',
-            text1: 'Took too long to fetch weather data.',
-            position: 'bottom',
-            visibilityTime: 3000,
-          });
-        } else {
-          console.warn('Error fetching weather data:', error);
-          Toast.show({
-            type: 'error',
-            text1: 'There was an error fetching weather data.',
-            position: 'bottom',
-            visibilityTime: 3000,
-          });
-        }
+        const elapsed = Date.now() - startTime;
+        console.warn('Fetch failed after', elapsed, 'ms. Error:', error.message);
+        console.warn('Error details:', JSON.stringify(error));
+        
+        Toast.show({
+          type: 'error',
+          text1: 'Weather data error: ' + error.message.substring(0, 50),
+          position: 'bottom',
+          visibilityTime: 5000,
+        });
+        
         clearTimeout(loadingTimeout);
         setLoading(false);
         setRefreshing(false);
@@ -679,7 +687,7 @@ function AppContent() {
               <Text style={[styles.text, { width: '80%' }]}>{data.insight}</Text>
             </View>}
 
-            {(data?.forecasts?.spc[0] && data?.forecasts?.spc[0].level != 'NONE') && (
+            {(data?.forecasts?.spc[0] && data?.forecasts?.spc[0].level != 'NONE' && data?.forecasts?.spc[0].level != 'TSTM') && (
               <View style={[styles.cardContainer, (open || locationOpen) && { pointerEvents: 'none' }, { backgroundColor: data.forecasts.spc[0].color, borderWidth: 1, borderColor: data.forecasts.spc[0].altcolor || theme.cardBackground }]}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', width: '100%', justifyContent: 'space-between' }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
