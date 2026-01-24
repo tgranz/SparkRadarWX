@@ -3,31 +3,11 @@
 // Switch to NWS data in v0.1.7 instead of METARS...
 // ... because METAR data is quite inaccurate
 //
+// This file is OBSOLETE as of v0.1.10 and will be removed in future versions.
+//
 // Copyright 2025 Tyler Granzow
 // FOSS software under Apache-2.0 License, see LICENSE.txt
 
-
-/* New data return format:
-{
-    station: "",
-    condition: "",
-    temp: 0, in fahrenheit
-    dew_point: 0, in fahrenheit
-    wind_direction: 0, degrees
-    wind_speed: 0, in mph
-    pressure: 0, in inHg
-    r_humidity: 0,
-    visibility: 0, in miles,
-    sunrise: "", local time string,
-    sunset: "", local time string,
-    insight: "", // Simple weather insight string
-    forecast: { ... },
-    hourly: { ... },
-    minutely: { ... },
-    alerts: { ... },
-    forecast: { ... }
-}
-*/
 
 // Imports
 import Constants from 'expo-constants';
@@ -127,6 +107,15 @@ function weatherparser(lat, lon, callback, units = {}) {
 
         const nwsConditions = nwsForecast?.currentobservation || null;
 
+        // Filter out NaN values from nwsConditions
+        if (nwsConditions) {
+            Object.keys(nwsConditions).forEach(key => {
+                if ( nwsConditions[key] == 'NaN' || isNaN(nwsConditions[key])) {
+                    nwsConditions[key] = undefined;
+                }
+            });
+        }
+
         // Propogate base data with OWM fallback
         baseData = {
             station: nwsConditions?.id || owmData?.name || "",
@@ -142,7 +131,7 @@ function weatherparser(lat, lon, callback, units = {}) {
             sunset: owmData?.current?.sunset ? new Date(owmData.current.sunset * 1000).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : null,
             cloudcover: owmData?.current?.clouds || 0,
             uvindex: owmData?.current?.uvi || 0,
-            lastUpdated: nwsConditions.creationDateLocal || new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString()
+            lastUpdated: nwsConditions?.creationDateLocal || new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString()
         }
         
         // Determine daily forecast: NWS first, OWM fallback
@@ -182,8 +171,6 @@ function weatherparser(lat, lon, callback, units = {}) {
         // Generate simple insight
         if (precipData.some(prob => prob > 80)){
             baseData.insight = "There's a high chance of precipitation in the next 24 hours.";
-        } else if (precipData.some(prob => prob > 30)){
-            baseData.insight = "There's a chance of precipitation in the next 24 hours.";
         } else if (nwsConditions?.Gust && parseInt(nwsConditions?.Gust) - parseInt(baseData.wind_speed) >= 10) {
             baseData.insight = `Wind is gusting up to ${convertSpeed(parseInt(nwsConditions.Gust))} ${getSpeedUnit()}.`;
         } else if (nwsConditions?.WindChill && parseInt(baseData.temp) - parseInt(nwsConditions?.WindChill) >= 5) {

@@ -3,6 +3,8 @@
 
 > This project is a WIP. When a release is available, it will be listed under the GitHub releases section.
 
+> Note: Staring in preview v0.1.10, SparkRadarWX now uses the backend at [SparkRadarWXAPI OneCall](https://github.com/tgranz/sparkradarwxapi)
+
 Licensed with Apache 2.0. (c) Tyler Granzow 2025.
 
 <br>
@@ -19,13 +21,13 @@ Licensed with Apache 2.0. (c) Tyler Granzow 2025.
 2) Download the Expo Go app from the Play Store or App Store.
 3) Install and setup EAS with `sudo npm install -g eas-cli`. Then run `eas init`. You will need an expo.dev account.
 4) Install dependencies with `npm install`.
-5) **Optional:** Add a .env file with `OPENWEATHER_API_KEY=<your_key>`. *Without this key, the app will use the nearest METAR, which may have bad data.*
+5) Add a .env file with `ONECALL_API_KEY=<your_key>`. This is the same API key you set up in the OneCall API .env file.
 6) Start the development server with `npx expo start`.
 7) In Expo Go, find the QR scanner and scan the QR code in the terminal. The app should compile and be running on your device.
 
 # Build (Android)
 Follow "Test", then...
-1) **Optional:** Configure your OpenWeatherMap API key for the app with  `eas env:create --scope project --name OPENWEATHER_API_KEY --value "your_key_here"`. For "visibility" choose "secret", and for "environment", choose "development", "preview", and "production". This is necessary since expo will not compile your .env file with the app.
+1) Configure your OneCall API key for the app with  `eas env:create --scope project --name ONECALL_API_KEY --value "your_key_here"`. For "visibility" choose "secret", and for "environment", choose "development", "preview", and "production". This is necessary since expo will not compile your .env file with the app.
 2) Ensure your `eas.json` file looks something like this:
 ```json
 ...

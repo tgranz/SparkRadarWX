@@ -26,7 +26,7 @@ const convertIsoToLocal = (isoString) => {
 export default function AlertsScreen({ onBack, alerts }) {
     const { theme, isDark } = useTheme();
     const styles = style(theme);
-    const features = alerts && alerts.features ? alerts.features : [];
+    const features = alerts || [];
 
     useEffect(() => {
         const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -62,19 +62,17 @@ export default function AlertsScreen({ onBack, alerts }) {
                     )}
 
                     {features.map((f, idx) => {
-                        var p = f.properties || {};
+                        var p = f.product || {};
                         var event = p.event || 'Alert';
                         var headline = p.headline || '';
-                        var desc = p.description || p.instruction || '';
-                        var area = p.areaDesc || '';
-                        var effective = p.effective || '';
-                        var expires = p.expires || '';
-                        var instruction = p.instruction || '';
+                        var desc = p.description || '';
+                        var area = p.areas || '';
+                        var effective = f.properties?.start || '';
+                        var expires = f.properties?.end || '';
+                        var instruction = p.instructions || '';
 
-                        desc = desc.replace(/\n\n/g, '\n'); // Double newlines to single
-                        desc = desc.replace(/\n/g, ' '); // Remove newlines for better display
-                        instruction = instruction.replace(/\n\n/g, '\n'); // Double newlines to single
-                        instruction = instruction.replace(/\n/g, ' '); // Remove newlines for better display
+                        desc = desc.replace(/\*/g, '\n * '); // Double newlines to single
+                        instruction = instruction.replace(/\*/g, '\n * '); // Remove newlines for better display
 
                         var effectiveLocal = effective ? convertIsoToLocal(effective) : '';
                         var expiresLocal = expires ? convertIsoToLocal(expires) : '';
@@ -92,8 +90,8 @@ export default function AlertsScreen({ onBack, alerts }) {
                                     width: '100%', textAlign: 'center', marginBottom: 10, fontSize: 16
                                 }]}>{event}</Text>
                                 {headline ? (<Text style={[styles.text, { fontWeight: 'bold', marginBottom: 10 }]}>{headline}</Text>) : null}
-                                {effective ? (<Text style={[styles.text, { fontWeight: 'bold' }]}>Issued: {effective}</Text>) : null}
-                                {expires ? (<Text style={[styles.text, { marginBottom: 10, fontWeight: 'bold' }]}>Expires: {expires}</Text>) : null}
+                                {effective ? (<Text style={[styles.text, { fontWeight: 'bold' }]}>Effective starting at: {effective}</Text>) : null}
+                                {expires ? (<Text style={[styles.text, { marginBottom: 10, fontWeight: 'bold' }]}>Expiring at: {expires}</Text>) : null}
                                 {area ? (<Text style={[styles.text, { marginBottom: 10 }]}>{area}</Text>) : null}
                                 {desc ? (<Text style={[styles.text]}>{desc}</Text>) : null}
                                 {instruction ? (<Text style={[styles.text, { marginTop: 10, fontWeight: 'bold' }]}>{instruction}</Text>) : null}

@@ -1,0 +1,1190 @@
+{
+  "status": {
+    "owm": "OK",
+    "nws": "OK",
+    "alerts": "OK",
+    "spc": {
+      "day1": "OK",
+      "day2": "OK",
+      "day3": "OK"
+    }
+  },
+  "data": {
+    "location": {
+      "wfo": "IWX",
+      "nearest_radar": "KIWX",
+      "sunrise": "2026-01-23T12:59:04.000Z",
+      "sunset": "2026-01-23T22:45:26.000Z"
+    },
+    "current": {
+      "temperature": 258.15,
+      "dew_point": 252.04,
+      "humidity": 60,
+      "wind_speed": 5.81152,
+      "wind_gust": null,
+      "wind_direction": 320,
+      "condition": {
+        "condition": "Light Snow",
+        "code": 621
+      },
+      "cloud_cover": 40,
+      "visibility": 16.0934,
+      "pressure": 1034.88
+    },
+    "alerts": [
+      {
+        "properties": {
+          "id": "urn:oid:2.49.0.1.840.0.80ea0230a3d1aea7b96d845b4051581751a1643c.002.1",
+          "issued": "2026-01-23T14:30:00-05:00",
+          "start": "2026-01-23T14:30:00-05:00",
+          "end": "2026-01-24T10:00:00-05:00",
+          "severity": "Moderate"
+        },
+        "product": {
+          "areas": "Noble; De Kalb; Whitley; Allen; White; Cass; Miami; Wabash; Huntington; Wells; Williams; Fulton",
+          "event": "Cold Weather Advisory",
+          "headline": "Cold Weather Advisory issued January 23 at 2:30PM EST until January 24 at 10:00AM EST by NWS Northern Indiana",
+          "description": "* WHAT...Very cold wind chills as low as 15 to 20 below zero. * WHERE...Portions of northern Indiana and northwest Ohio. * WHEN...Until 10 AM EST Saturday. * IMPACTS...The cold wind chills as low as 15 below zero could result in hypothermia or frostbite if precautions are not taken.",
+          "instructions": "Use caution while traveling outside. Wear appropriate clothing, a hat, and gloves."
+        }
+      },
+      {
+        "properties": {
+          "id": "urn:oid:2.49.0.1.840.0.0b1398ff4470f906feb864fb4c3c882e49f32ff3.002.1",
+          "issued": "2026-01-23T13:57:00-05:00",
+          "start": "2026-01-23T13:57:00-05:00",
+          "end": "2026-01-24T02:00:00-05:00",
+          "severity": "Severe"
+        },
+        "product": {
+          "areas": "Allen; Cass; Miami; Wabash; Huntington; Fulton; Defiance; Henry; Paulding",
+          "event": "Winter Storm Watch",
+          "headline": "Winter Storm Watch issued January 23 at 1:57PM EST until January 25 at 7:00PM EST by NWS Northern Indiana",
+          "description": "* WHAT...Heavy snow possible. Total snow accumulations between 4 and 6 inches possible. * WHERE...Portions of northern Indiana and northwest Ohio. * WHEN...From Saturday evening through Sunday evening. * IMPACTS...Roads, and especially bridges and overpasses, will likely become slick and hazardous. Plan on slippery road conditions. * ADDITIONAL DETAILS...Light snow will develop by Saturday evening, increasing in coverage and intensity during the day Sunday. The period of greatest impacts and snow accumulations will exist Sunday afternoon into early Sunday evening.",
+          "instructions": "Monitor the latest forecasts for updates on this situation. Persons are urged to stay indoors until conditions improve. If you must go outside, dress in layers. Several layers of clothes will keep you warmer than a single heavy coat. Cover exposed skin to reduce your risk of frostbite or hypothermia. Gloves, a scarf, and a hat will keep you from losing your body heat. Persons should consider delaying all travel. If travel is absolutely necessary, drive with extreme caution. Consider taking a winter storm kit along with you, including such items as tire chains, booster cables, flashlight, shovel, blankets and extra clothing. Also take water, a first aid kit, and anything else that would help you survive in case you become stranded."
+        }
+      }
+    ],
+    "forecasts": {
+      "spc": [
+        {
+          "date": "2026-01-23",
+          "level": "NONE",
+          "description": "No thunderstorms forecast for this location.",
+          "color": null,
+          "altcolor": null
+        },
+        {
+          "date": "2026-01-24",
+          "level": "NONE",
+          "description": "No thunderstorms forecast for this location.",
+          "color": null,
+          "altcolor": null
+        },
+        {
+          "date": "2026-01-25",
+          "level": "NONE",
+          "description": "No thunderstorms forecast for this location.",
+          "color": null,
+          "altcolor": null
+        }
+      ],
+      "minutely": [
+        {
+          "time": "2026-01-23T21:26:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T21:27:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T21:28:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T21:29:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T21:30:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T21:31:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T21:32:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T21:33:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T21:34:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T21:35:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T21:36:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T21:37:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T21:38:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T21:39:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T21:40:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T21:41:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T21:42:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T21:43:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T21:44:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T21:45:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T21:46:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T21:47:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T21:48:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T21:49:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T21:50:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T21:51:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T21:52:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T21:53:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T21:54:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T21:55:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T21:56:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T21:57:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T21:58:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T21:59:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T22:00:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T22:01:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T22:02:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T22:03:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T22:04:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T22:05:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T22:06:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T22:07:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T22:08:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T22:09:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T22:10:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T22:11:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T22:12:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T22:13:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T22:14:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T22:15:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T22:16:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T22:17:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T22:18:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T22:19:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T22:20:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T22:21:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T22:22:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T22:23:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T22:24:00.000Z",
+          "precipitation": 0
+        },
+        {
+          "time": "2026-01-23T22:25:00.000Z",
+          "precipitation": 0
+        }
+      ],
+      "hourly": [
+        {
+          "time": "2026-01-23T21:00:00.000Z",
+          "temperature": 258.78,
+          "feels_like": 251.78,
+          "humidity": 60,
+          "wind_speed": 6.79,
+          "wind_direction": 325,
+          "condition": {
+            "condition": "Cloudy",
+            "code": 500
+          },
+          "cloud_cover": 40,
+          "precipitation_probability": 0
+        },
+        {
+          "time": "2026-01-23T22:00:00.000Z",
+          "temperature": 258.88,
+          "feels_like": 251.88,
+          "humidity": 59,
+          "wind_speed": 6.36,
+          "wind_direction": 330,
+          "condition": {
+            "condition": "Partly Cloudy",
+            "code": 330
+          },
+          "cloud_cover": 52,
+          "precipitation_probability": 0
+        },
+        {
+          "time": "2026-01-23T23:00:00.000Z",
+          "temperature": 258.71,
+          "feels_like": 251.71,
+          "humidity": 60,
+          "wind_speed": 5.68,
+          "wind_direction": 335,
+          "condition": {
+            "condition": "Partly Cloudy",
+            "code": 330
+          },
+          "cloud_cover": 64,
+          "precipitation_probability": 0
+        },
+        {
+          "time": "2026-01-24T00:00:00.000Z",
+          "temperature": 258.41,
+          "feels_like": 251.41,
+          "humidity": 62,
+          "wind_speed": 5.01,
+          "wind_direction": 341,
+          "condition": {
+            "condition": "Partly Cloudy",
+            "code": 330
+          },
+          "cloud_cover": 76,
+          "precipitation_probability": 0
+        },
+        {
+          "time": "2026-01-24T01:00:00.000Z",
+          "temperature": 257.71,
+          "feels_like": 250.71,
+          "humidity": 62,
+          "wind_speed": 4.62,
+          "wind_direction": 350,
+          "condition": {
+            "condition": "Cloudy",
+            "code": 500
+          },
+          "cloud_cover": 88,
+          "precipitation_probability": 0
+        },
+        {
+          "time": "2026-01-24T02:00:00.000Z",
+          "temperature": 256.56,
+          "feels_like": 249.56,
+          "humidity": 64,
+          "wind_speed": 4.34,
+          "wind_direction": 357,
+          "condition": {
+            "condition": "Cloudy",
+            "code": 500
+          },
+          "cloud_cover": 100,
+          "precipitation_probability": 0
+        },
+        {
+          "time": "2026-01-24T03:00:00.000Z",
+          "temperature": 256.08,
+          "feels_like": 249.08,
+          "humidity": 67,
+          "wind_speed": 3.63,
+          "wind_direction": 7,
+          "condition": {
+            "condition": "Cloudy",
+            "code": 500
+          },
+          "cloud_cover": 100,
+          "precipitation_probability": 0
+        },
+        {
+          "time": "2026-01-24T04:00:00.000Z",
+          "temperature": 256.36,
+          "feels_like": 249.4,
+          "humidity": 68,
+          "wind_speed": 3.06,
+          "wind_direction": 21,
+          "condition": {
+            "condition": "Cloudy",
+            "code": 500
+          },
+          "cloud_cover": 100,
+          "precipitation_probability": 0
+        },
+        {
+          "time": "2026-01-24T05:00:00.000Z",
+          "temperature": 256.59,
+          "feels_like": 250,
+          "humidity": 68,
+          "wind_speed": 2.83,
+          "wind_direction": 34,
+          "condition": {
+            "condition": "Cloudy",
+            "code": 500
+          },
+          "cloud_cover": 98,
+          "precipitation_probability": 0
+        },
+        {
+          "time": "2026-01-24T06:00:00.000Z",
+          "temperature": 256.51,
+          "feels_like": 249.95,
+          "humidity": 65,
+          "wind_speed": 2.8,
+          "wind_direction": 40,
+          "condition": {
+            "condition": "Cloudy",
+            "code": 500
+          },
+          "cloud_cover": 99,
+          "precipitation_probability": 0
+        },
+        {
+          "time": "2026-01-24T07:00:00.000Z",
+          "temperature": 256.48,
+          "feels_like": 250.17,
+          "humidity": 61,
+          "wind_speed": 2.63,
+          "wind_direction": 39,
+          "condition": {
+            "condition": "Cloudy",
+            "code": 500
+          },
+          "cloud_cover": 100,
+          "precipitation_probability": 0
+        },
+        {
+          "time": "2026-01-24T08:00:00.000Z",
+          "temperature": 256.61,
+          "feels_like": 251.49,
+          "humidity": 58,
+          "wind_speed": 1.97,
+          "wind_direction": 42,
+          "condition": {
+            "condition": "Cloudy",
+            "code": 500
+          },
+          "cloud_cover": 100,
+          "precipitation_probability": 0
+        },
+        {
+          "time": "2026-01-24T09:00:00.000Z",
+          "temperature": 256.65,
+          "feels_like": 251.4,
+          "humidity": 55,
+          "wind_speed": 2.04,
+          "wind_direction": 37,
+          "condition": {
+            "condition": "Cloudy",
+            "code": 500
+          },
+          "cloud_cover": 100,
+          "precipitation_probability": 0
+        },
+        {
+          "time": "2026-01-24T10:00:00.000Z",
+          "temperature": 256.79,
+          "feels_like": 251.39,
+          "humidity": 54,
+          "wind_speed": 2.13,
+          "wind_direction": 36,
+          "condition": {
+            "condition": "Cloudy",
+            "code": 500
+          },
+          "cloud_cover": 100,
+          "precipitation_probability": 0
+        },
+        {
+          "time": "2026-01-24T11:00:00.000Z",
+          "temperature": 256.9,
+          "feels_like": 251.32,
+          "humidity": 53,
+          "wind_speed": 2.24,
+          "wind_direction": 47,
+          "condition": {
+            "condition": "Cloudy",
+            "code": 500
+          },
+          "cloud_cover": 100,
+          "precipitation_probability": 0
+        },
+        {
+          "time": "2026-01-24T12:00:00.000Z",
+          "temperature": 255.23,
+          "feels_like": 248.65,
+          "humidity": 52,
+          "wind_speed": 2.65,
+          "wind_direction": 46,
+          "condition": {
+            "condition": "Cloudy",
+            "code": 500
+          },
+          "cloud_cover": 100,
+          "precipitation_probability": 0
+        },
+        {
+          "time": "2026-01-24T13:00:00.000Z",
+          "temperature": 257.13,
+          "feels_like": 251.2,
+          "humidity": 52,
+          "wind_speed": 2.47,
+          "wind_direction": 56,
+          "condition": {
+            "condition": "Cloudy",
+            "code": 500
+          },
+          "cloud_cover": 100,
+          "precipitation_probability": 0
+        },
+        {
+          "time": "2026-01-24T14:00:00.000Z",
+          "temperature": 257.54,
+          "feels_like": 251.15,
+          "humidity": 50,
+          "wind_speed": 2.82,
+          "wind_direction": 63,
+          "condition": {
+            "condition": "Cloudy",
+            "code": 500
+          },
+          "cloud_cover": 100,
+          "precipitation_probability": 0
+        },
+        {
+          "time": "2026-01-24T15:00:00.000Z",
+          "temperature": 258.09,
+          "feels_like": 251.49,
+          "humidity": 47,
+          "wind_speed": 3.05,
+          "wind_direction": 69,
+          "condition": {
+            "condition": "Cloudy",
+            "code": 500
+          },
+          "cloud_cover": 100,
+          "precipitation_probability": 0
+        },
+        {
+          "time": "2026-01-24T16:00:00.000Z",
+          "temperature": 258.7,
+          "feels_like": 252.07,
+          "humidity": 44,
+          "wind_speed": 3.17,
+          "wind_direction": 74,
+          "condition": {
+            "condition": "Cloudy",
+            "code": 500
+          },
+          "cloud_cover": 100,
+          "precipitation_probability": 0
+        },
+        {
+          "time": "2026-01-24T17:00:00.000Z",
+          "temperature": 259.38,
+          "feels_like": 253.04,
+          "humidity": 41,
+          "wind_speed": 3.05,
+          "wind_direction": 75,
+          "condition": {
+            "condition": "Cloudy",
+            "code": 500
+          },
+          "cloud_cover": 100,
+          "precipitation_probability": 0
+        },
+        {
+          "time": "2026-01-24T18:00:00.000Z",
+          "temperature": 259.9,
+          "feels_like": 253.89,
+          "humidity": 40,
+          "wind_speed": 2.88,
+          "wind_direction": 70,
+          "condition": {
+            "condition": "Cloudy",
+            "code": 500
+          },
+          "cloud_cover": 100,
+          "precipitation_probability": 0
+        },
+        {
+          "time": "2026-01-24T19:00:00.000Z",
+          "temperature": 260.27,
+          "feels_like": 254.44,
+          "humidity": 39,
+          "wind_speed": 2.8,
+          "wind_direction": 74,
+          "condition": {
+            "condition": "Cloudy",
+            "code": 500
+          },
+          "cloud_cover": 100,
+          "precipitation_probability": 0
+        },
+        {
+          "time": "2026-01-24T20:00:00.000Z",
+          "temperature": 260.65,
+          "feels_like": 254.34,
+          "humidity": 39,
+          "wind_speed": 3.24,
+          "wind_direction": 80,
+          "condition": {
+            "condition": "Cloudy",
+            "code": 500
+          },
+          "cloud_cover": 100,
+          "precipitation_probability": 0
+        },
+        {
+          "time": "2026-01-24T21:00:00.000Z",
+          "temperature": 260.91,
+          "feels_like": 254.66,
+          "humidity": 39,
+          "wind_speed": 3.23,
+          "wind_direction": 78,
+          "condition": {
+            "condition": "Cloudy",
+            "code": 500
+          },
+          "cloud_cover": 100,
+          "precipitation_probability": 0
+        },
+        {
+          "time": "2026-01-24T22:00:00.000Z",
+          "temperature": 260.94,
+          "feels_like": 254.46,
+          "humidity": 41,
+          "wind_speed": 3.44,
+          "wind_direction": 78,
+          "condition": {
+            "condition": "Cloudy",
+            "code": 500
+          },
+          "cloud_cover": 100,
+          "precipitation_probability": 0
+        },
+        {
+          "time": "2026-01-24T23:00:00.000Z",
+          "temperature": 260.91,
+          "feels_like": 254.27,
+          "humidity": 42,
+          "wind_speed": 3.58,
+          "wind_direction": 86,
+          "condition": {
+            "condition": "Cloudy",
+            "code": 500
+          },
+          "cloud_cover": 100,
+          "precipitation_probability": 0
+        },
+        {
+          "time": "2026-01-25T00:00:00.000Z",
+          "temperature": 260.93,
+          "feels_like": 253.93,
+          "humidity": 43,
+          "wind_speed": 4.07,
+          "wind_direction": 85,
+          "condition": {
+            "condition": "Cloudy",
+            "code": 500
+          },
+          "cloud_cover": 100,
+          "precipitation_probability": 0
+        },
+        {
+          "time": "2026-01-25T01:00:00.000Z",
+          "temperature": 260.93,
+          "feels_like": 253.93,
+          "humidity": 45,
+          "wind_speed": 4.41,
+          "wind_direction": 92,
+          "condition": {
+            "condition": "Cloudy",
+            "code": 500
+          },
+          "cloud_cover": 100,
+          "precipitation_probability": 0
+        },
+        {
+          "time": "2026-01-25T02:00:00.000Z",
+          "temperature": 260.98,
+          "feels_like": 254.04,
+          "humidity": 47,
+          "wind_speed": 3.88,
+          "wind_direction": 90,
+          "condition": {
+            "condition": "Cloudy",
+            "code": 500
+          },
+          "cloud_cover": 100,
+          "precipitation_probability": 0
+        },
+        {
+          "time": "2026-01-25T03:00:00.000Z",
+          "temperature": 261.11,
+          "feels_like": 254.11,
+          "humidity": 48,
+          "wind_speed": 4.2,
+          "wind_direction": 91,
+          "condition": {
+            "condition": "Cloudy",
+            "code": 500
+          },
+          "cloud_cover": 100,
+          "precipitation_probability": 0
+        },
+        {
+          "time": "2026-01-25T04:00:00.000Z",
+          "temperature": 261.04,
+          "feels_like": 254.09,
+          "humidity": 55,
+          "wind_speed": 3.9,
+          "wind_direction": 87,
+          "condition": {
+            "condition": "Cloudy",
+            "code": 500
+          },
+          "cloud_cover": 100,
+          "precipitation_probability": 0
+        },
+        {
+          "time": "2026-01-25T05:00:00.000Z",
+          "temperature": 260.74,
+          "feels_like": 253.77,
+          "humidity": 74,
+          "wind_speed": 3.85,
+          "wind_direction": 85,
+          "condition": {
+            "condition": "Cloudy",
+            "code": 500
+          },
+          "cloud_cover": 100,
+          "precipitation_probability": 0
+        },
+        {
+          "time": "2026-01-25T06:00:00.000Z",
+          "temperature": 260.61,
+          "feels_like": 253.64,
+          "humidity": 87,
+          "wind_speed": 3.82,
+          "wind_direction": 78,
+          "condition": {
+            "condition": "Cloudy",
+            "code": 500
+          },
+          "cloud_cover": 100,
+          "precipitation_probability": 0
+        },
+        {
+          "time": "2026-01-25T07:00:00.000Z",
+          "temperature": 260.73,
+          "feels_like": 253.78,
+          "humidity": 87,
+          "wind_speed": 3.83,
+          "wind_direction": 67,
+          "condition": {
+            "condition": "Light Snow",
+            "code": 621
+          },
+          "cloud_cover": 100,
+          "precipitation_probability": 100
+        },
+        {
+          "time": "2026-01-25T08:00:00.000Z",
+          "temperature": 260.8,
+          "feels_like": 253.8,
+          "humidity": 90,
+          "wind_speed": 3.94,
+          "wind_direction": 63,
+          "condition": {
+            "condition": "Light Snow",
+            "code": 621
+          },
+          "cloud_cover": 100,
+          "precipitation_probability": 100
+        },
+        {
+          "time": "2026-01-25T09:00:00.000Z",
+          "temperature": 260.88,
+          "feels_like": 253.88,
+          "humidity": 90,
+          "wind_speed": 3.93,
+          "wind_direction": 65,
+          "condition": {
+            "condition": "Light Snow",
+            "code": 621
+          },
+          "cloud_cover": 100,
+          "precipitation_probability": 100
+        },
+        {
+          "time": "2026-01-25T10:00:00.000Z",
+          "temperature": 260.97,
+          "feels_like": 253.97,
+          "humidity": 91,
+          "wind_speed": 4.08,
+          "wind_direction": 57,
+          "condition": {
+            "condition": "Light Snow",
+            "code": 621
+          },
+          "cloud_cover": 100,
+          "precipitation_probability": 100
+        },
+        {
+          "time": "2026-01-25T11:00:00.000Z",
+          "temperature": 261.18,
+          "feels_like": 254.18,
+          "humidity": 89,
+          "wind_speed": 4.38,
+          "wind_direction": 58,
+          "condition": {
+            "condition": "Light Snow",
+            "code": 621
+          },
+          "cloud_cover": 100,
+          "precipitation_probability": 100
+        },
+        {
+          "time": "2026-01-25T12:00:00.000Z",
+          "temperature": 261.31,
+          "feels_like": 254.32,
+          "humidity": 91,
+          "wind_speed": 4,
+          "wind_direction": 55,
+          "condition": {
+            "condition": "Light Snow",
+            "code": 621
+          },
+          "cloud_cover": 100,
+          "precipitation_probability": 100
+        },
+        {
+          "time": "2026-01-25T13:00:00.000Z",
+          "temperature": 261.16,
+          "feels_like": 254.16,
+          "humidity": 92,
+          "wind_speed": 4.55,
+          "wind_direction": 51,
+          "condition": {
+            "condition": "Light Snow",
+            "code": 621
+          },
+          "cloud_cover": 100,
+          "precipitation_probability": 100
+        },
+        {
+          "time": "2026-01-25T14:00:00.000Z",
+          "temperature": 261.26,
+          "feels_like": 254.26,
+          "humidity": 89,
+          "wind_speed": 4.76,
+          "wind_direction": 48,
+          "condition": {
+            "condition": "Light Snow",
+            "code": 621
+          },
+          "cloud_cover": 100,
+          "precipitation_probability": 100
+        },
+        {
+          "time": "2026-01-25T15:00:00.000Z",
+          "temperature": 261.48,
+          "feels_like": 254.48,
+          "humidity": 90,
+          "wind_speed": 4.59,
+          "wind_direction": 49,
+          "condition": {
+            "condition": "Light Snow",
+            "code": 621
+          },
+          "cloud_cover": 100,
+          "precipitation_probability": 100
+        },
+        {
+          "time": "2026-01-25T16:00:00.000Z",
+          "temperature": 261.85,
+          "feels_like": 254.85,
+          "humidity": 89,
+          "wind_speed": 4.67,
+          "wind_direction": 42,
+          "condition": {
+            "condition": "Light Snow",
+            "code": 621
+          },
+          "cloud_cover": 100,
+          "precipitation_probability": 100
+        },
+        {
+          "time": "2026-01-25T17:00:00.000Z",
+          "temperature": 262.27,
+          "feels_like": 255.27,
+          "humidity": 89,
+          "wind_speed": 4.86,
+          "wind_direction": 42,
+          "condition": {
+            "condition": "Light Snow",
+            "code": 621
+          },
+          "cloud_cover": 100,
+          "precipitation_probability": 100
+        },
+        {
+          "time": "2026-01-25T18:00:00.000Z",
+          "temperature": 262.71,
+          "feels_like": 255.71,
+          "humidity": 89,
+          "wind_speed": 5.07,
+          "wind_direction": 33,
+          "condition": {
+            "condition": "Light Snow",
+            "code": 621
+          },
+          "cloud_cover": 100,
+          "precipitation_probability": 100
+        },
+        {
+          "time": "2026-01-25T19:00:00.000Z",
+          "temperature": 262.93,
+          "feels_like": 255.93,
+          "humidity": 90,
+          "wind_speed": 4.83,
+          "wind_direction": 23,
+          "condition": {
+            "condition": "Light Snow",
+            "code": 621
+          },
+          "cloud_cover": 100,
+          "precipitation_probability": 100
+        },
+        {
+          "time": "2026-01-25T20:00:00.000Z",
+          "temperature": 263.09,
+          "feels_like": 256.09,
+          "humidity": 91,
+          "wind_speed": 4.95,
+          "wind_direction": 24,
+          "condition": {
+            "condition": "Light Snow",
+            "code": 621
+          },
+          "cloud_cover": 100,
+          "precipitation_probability": 100
+        }
+      ],
+      "daily": [
+        {
+          "date": "2026-01-23",
+          "condition": {
+            "condition": "Partly Cloudy",
+            "code": 330
+          },
+          "sunrise": "2026-01-23T12:59:04.000Z",
+          "sunset": "2026-01-23T22:45:26.000Z",
+          "high": 277.594444444444,
+          "low": 271.483333333333,
+          "precipitation_probability": null,
+          "wind_speed": 7.8,
+          "wind_direction": 304,
+          "description": "Mostly cloudy and cold, with a high near 8. Wind chill values as low as -10. Northwest wind around 15 mph, with gusts as high as 20 mph. ",
+          "night": {
+            "condition": {
+              "condition": "Mostly Cloudy",
+              "code": 540
+            },
+            "precipitation_probability": null
+          }
+        },
+        {
+          "date": "2026-01-24",
+          "condition": {
+            "condition": "Cloudy",
+            "code": 500
+          },
+          "sunrise": "2026-01-24T12:58:21.000Z",
+          "sunset": "2026-01-24T22:46:40.000Z",
+          "high": 278.705555555556,
+          "low": 276.483333333333,
+          "precipitation_probability": null,
+          "wind_speed": 4.41,
+          "wind_direction": 92,
+          "description": "Mostly cloudy and cold, with a high near 10. Wind chill values as low as -10. East wind around 5 mph. ",
+          "night": {
+            "condition": {
+              "condition": "Snow",
+              "code": 622
+            },
+            "precipitation_probability": 90
+          }
+        },
+        {
+          "date": "2026-01-25",
+          "condition": {
+            "condition": "Snow",
+            "code": 622
+          },
+          "sunrise": "2026-01-25T12:57:36.000Z",
+          "sunset": "2026-01-25T22:47:54.000Z",
+          "high": 281.483333333333,
+          "low": 275.927777777778,
+          "precipitation_probability": 90,
+          "wind_speed": 5.32,
+          "wind_direction": 351,
+          "description": "Snow.  High near 15. Northeast wind around 10 mph, with gusts as high as 20 mph.  Chance of precipitation is 90%. New snow accumulation of 3 to 5 inches possible. ",
+          "night": {
+            "condition": {
+              "condition": "Snow",
+              "code": 622
+            },
+            "precipitation_probability": 50
+          }
+        },
+        {
+          "date": "2026-01-26",
+          "condition": {
+            "condition": "Light Snow",
+            "code": 621
+          },
+          "sunrise": "2026-01-26T12:56:49.000Z",
+          "sunset": "2026-01-26T22:49:08.000Z",
+          "high": 280.927777777778,
+          "low": 272.594444444444,
+          "precipitation_probability": 20,
+          "wind_speed": 7.92,
+          "wind_direction": 289,
+          "description": "A 20 percent chance of snow before 1pm.  Partly sunny and cold, with a high near 14.",
+          "night": {
+            "condition": {
+              "condition": "Partly Cloudy",
+              "code": 330
+            },
+            "precipitation_probability": null
+          }
+        },
+        {
+          "date": "2026-01-27",
+          "condition": {
+            "condition": "Light Snow",
+            "code": 621
+          },
+          "sunrise": "2026-01-27T12:56:01.000Z",
+          "sunset": "2026-01-27T22:50:23.000Z",
+          "high": 282.594444444444,
+          "low": 274.816666666667,
+          "precipitation_probability": null,
+          "wind_speed": 9.32,
+          "wind_direction": 223,
+          "description": "Partly sunny and cold, with a high near 17.",
+          "night": {
+            "condition": {
+              "condition": "Mostly Cloudy",
+              "code": 540
+            },
+            "precipitation_probability": null
+          }
+        },
+        {
+          "date": "2026-01-28",
+          "condition": {
+            "condition": "Light Snow",
+            "code": 621
+          },
+          "sunrise": "2026-01-28T12:55:11.000Z",
+          "sunset": "2026-01-28T22:51:38.000Z",
+          "high": 280.372222222222,
+          "low": 274.261111111111,
+          "precipitation_probability": 20,
+          "wind_speed": 5.18,
+          "wind_direction": 271,
+          "description": "A 20 percent chance of snow.  Partly sunny and cold, with a high near 13.",
+          "night": {
+            "condition": {
+              "condition": "Snow",
+              "code": 622
+            },
+            "precipitation_probability": 30
+          }
+        },
+        {
+          "date": "2026-01-29",
+          "condition": {
+            "condition": "Light Snow",
+            "code": 621
+          },
+          "sunrise": "2026-01-29T12:54:18.000Z",
+          "sunset": "2026-01-29T22:52:54.000Z",
+          "high": 281.483333333333,
+          "low": 273.15,
+          "precipitation_probability": null,
+          "wind_speed": 5.22,
+          "wind_direction": 265,
+          "description": "A slight chance of snow.  Mostly sunny and cold, with a high near 15.",
+          "night": {
+            "condition": {
+              "condition": "Unknown",
+              "code": 0,
+              "raw": null
+            },
+            "precipitation_probability": null
+          }
+        },
+        {
+          "date": "2026-01-30",
+          "condition": {
+            "condition": "Cloudy",
+            "code": 500
+          },
+          "sunrise": "2026-01-30T12:53:24.000Z",
+          "sunset": "2026-01-30T22:54:09.000Z",
+          "high": 265.76,
+          "low": 258.19,
+          "precipitation_probability": null,
+          "wind_speed": 3.82,
+          "wind_direction": 14,
+          "description": null,
+          "night": {
+            "condition": {
+              "condition": "Unknown",
+              "code": 0,
+              "raw": null
+            },
+            "precipitation_probability": null
+          }
+        }
+      ]
+    }
+  }
+}

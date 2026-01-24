@@ -19,72 +19,76 @@ export default function HourlyScreen({ onMenuOpen, onBack, data }) {
         return () => backHandler.remove();
     }, [onBack]);
     
-    // OpenWeatherMap weather condition mapping
-    const getConditionFromOWM = (weather) => {
-        if (!weather || !weather[0]) return { icon: 'day-clear', condition: 'Unknown' };
-        
-        const main = weather[0].main.toLowerCase();
-        const desc = weather[0].description.toLowerCase();
-        
-        // Determine if day or night based on sunrise/sunset if available
-        const timePrefix = 'day'; // Default to day; can be enhanced with sunrise/sunset
-        
-        if (main.includes('clear') || main.includes('sunny')) {
-            if (main.includes('mostly')) return { icon: `${timePrefix}-clear`, condition: 'Mostly Clear' };
-            else if (main.includes('partly')) return { icon: `${timePrefix}-partlycloudy`, condition: 'Partly Cloudy' };
-            else return { icon: `${timePrefix}-clear`, condition: 'Clear' };
-        } else if (main.includes('cloud')) {
-            if (main.includes('mostly')) return { icon: `${timePrefix}-cloudy`, condition: 'Mostly Cloudy' };
-            if (main.includes('partly')) return { icon: `${timePrefix}-partlycloudy`, condition: 'Partly Cloudy' };
-            else return { icon: `${timePrefix}-cloudy`, condition: 'Cloudy' };
-        } else if (main.includes('rain') || main.includes('drizzle')) {
-            return { icon: `${timePrefix}-rain`, condition: weather[0].main };
-        } else if (main.includes('snow')) {
-            return { icon: `${timePrefix}-snow`, condition: 'Snow' };
-        } else if (main.includes('thunder')) {
-            return { icon: `${timePrefix}-thunderstorm`, condition: 'Thunderstorm' };
-        } else if (main.includes('fog') || main.includes('mist')) {
-            return { icon: `${timePrefix}-fog`, condition: weather[0].main };
+    // Helper function to get weather icon from condition
+    const getIcon = (condition, time = 'day') => {
+        if (typeof condition !== 'string' || !condition.trim()) {
+            return `${time}-sunny`;
         }
-        return { icon: `${timePrefix}-clear`, condition: weather[0].main };
+
+        const cond = condition.toLowerCase();
+        
+        if (cond.includes("overcast")) return `${time}-cloudy`;
+        if (cond.includes("partly")) return `${time}-partlycloudy`;
+        if (cond.includes("cloud")) return `${time}-cloudy`;
+        if (cond.includes("clear") || cond.includes("sunny") || cond.includes("fair")) return `${time}-clear`;
+        if (cond.includes("light") && cond.includes("snow")) return `${time}-snow`;
+        if (cond.includes("flurries")) return `${time}-snow`;
+        if (cond.includes("heavy") && cond.includes("snow")) return `${time}-snow`;
+        if (cond.includes("snow")) return `${time}-heavysnow`;
+        if (cond.includes("thunderstorm") || cond.includes("storm")) return `${time}-thunderstorm`;
+        if (cond.includes("rain") || cond.includes("shower")) return `${time}-rain`;
+        if (cond.includes("drizzle")) return `${time}-rain`;
+        if (cond.includes("haze")) return `${time}-haze`;
+        if (cond.includes("fog")) return `${time}-fog`;
+        if (cond.includes("mist")) return `${time}-mist`;
+        
+        return `${time}-clear`;
     };
 
-    // Build hourly data from OpenWeatherMap forecast
+    // Determine if time is day or night based on hour
+    const getDayOrNight = (hour) => {
+        // Simple approximation: 6 AM to 6 PM is day
+        return (hour >= 6 && hour < 18) ? 'day' : 'night';
+    };
+
+    // Build hourly data from forecasts.hourly
     const hourlyData = [];
-    if (data.hourlyForecast && Array.isArray(data.hourlyForecast)) {
-        const forecast = data.hourlyForecast;
-        const hoursToShow = 48; // Show next 48 hours
+    if (data.forecasts?.hourly && Array.isArray(data.forecasts.hourly)) {
+        const forecast = data.forecasts.hourly;
         const now = new Date();
         
         // Find the first forecast entry that is current or in the future
         let startIndex = 0;
         for (let i = 0; i < forecast.length; i++) {
-            const forecastTime = new Date(forecast[i].dt * 1000);
+            const forecastTime = new Date(forecast[i].time);
             if (forecastTime >= now) {
                 startIndex = i;
                 break;
             }
         }
         
-        // Build hourly data starting from the first future hour
-        for (let i = startIndex; i < Math.min(startIndex + hoursToShow, forecast.length); i++) {
+        // Build hourly data starting from the first future hour - show all available hours
+        for (let i = startIndex; i < forecast.length; i++) {
             const hourData = forecast[i];
-            const forecastTime = new Date(hourData.dt * 1000);
+            const forecastTime = new Date(hourData.time);
             const hour = forecastTime.getHours();
             const ampm = hour >= 12 ? 'PM' : 'AM';
             const displayHour = hour % 12 || 12;
+            const dayOrNight = getDayOrNight(hour);
             
-            const weatherInfo = getConditionFromOWM(hourData.weather);
+            // Extract condition string from condition object or use directly if it's already a string
+            const conditionStr = hourData.condition?.condition || hourData.condition || 'Clear';
+            const icon = getIcon(conditionStr, dayOrNight);
             
             hourlyData.push({
                 time: `${displayHour} ${ampm}`,
                 day: forecastTime.toLocaleDateString('en-US', { weekday: 'short' }),
-                temp: Math.round(hourData.temp),
-                icon: weatherInfo.icon,
-                condition: weatherInfo.condition,
-                precipitation: hourData.pop ? Math.round(hourData.pop * 100) : 0,
+                temp: Math.round(hourData.temperature || 0),
+                icon: icon,
+                condition: conditionStr,
+                precipitation: hourData.precipitation_probability ? Math.round(hourData.precipitation_probability) : 0,
                 humidity: hourData.humidity || 0,
-                cloudCover: hourData.clouds || 0,
+                cloudCover: hourData.cloud_cover || 0,
             });
         }
     }

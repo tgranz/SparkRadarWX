@@ -193,6 +193,8 @@ function alertcolor(alert) {
 
 // Contrast formula
 function getContrastYIQ(hexcolor) {
+    if (typeof hexcolor !== 'string' || !hexcolor) return 'black';
+
     hexcolor = hexcolor.replace('#', '');
 
     // Convert the hex color to RGB values

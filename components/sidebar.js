@@ -42,7 +42,7 @@ export default function Sidebar({ onClose, onNavigate }) {
     };
 
     const handleBuyMeCoffee = () => {
-        openURL('https://buymeacoffee.com/nimbusapps');
+        openURL('https://buymeacoffee.com/tgranz');
     };
 
     return (
