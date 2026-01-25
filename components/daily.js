@@ -77,6 +77,8 @@ export default function DailyScreen({ onMenuOpen, onBack, data, coordinates }) {
         if (cond.includes("overcast")) return `${time}-cloudy`;
         if (cond.includes("partly")) return `${time}-partlycloudy`;
         if (cond.includes("cloud")) return `${time}-cloudy`;
+        if (cond.includes("cold")) return `${time}-cold`;
+        if (cond.includes("hot")) return `${time}-hot`;
         if (cond.includes("clear") || cond.includes("sunny") || cond.includes("fair")) return `${time}-clear`;
         if (cond.includes("light") && cond.includes("snow")) return `${time}-snow`;
         if (cond.includes("flurries")) return `${time}-snow`;

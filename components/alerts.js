@@ -80,7 +80,7 @@ export default function AlertsScreen({ onBack, alerts }) {
                         effective = effectiveLocal;
                         expires = expiresLocal;
 
-                        var thiscolor = alertcolor(event);
+                        var thiscolor = f.properties.color || alertcolor(event);
                         var thisTextColor = getContrastYIQ(thiscolor);
 
                         return (

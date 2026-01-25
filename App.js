@@ -181,8 +181,24 @@ function AppContent() {
   // Helper functions for SPC Risk
   const getSpcIndex = (label) => {
     if (typeof label !== 'string' || !label) return 0;
-    const match = label.match(/^(\d)/);
-    return match ? parseInt(match[1]) : 0;
+    
+    // Try to extract a digit from the start of the string (e.g., "1-Marginal", "2-Slight")
+    const digitMatch = label.match(/^(\d)/);
+    if (digitMatch) return parseInt(digitMatch[1]);
+    
+    // Try to find a digit anywhere in the string
+    const anyDigitMatch = label.match(/(\d)/);
+    if (anyDigitMatch) return parseInt(anyDigitMatch[1]);
+    
+    // Map common SPC level names to their numeric values
+    const labelUpper = label.toUpperCase();
+    if (labelUpper.includes('MRGL') || labelUpper.includes('MARGINAL')) return 1;
+    if (labelUpper.includes('SLGT') || labelUpper.includes('SLIGHT')) return 2;
+    if (labelUpper.includes('ENH') || labelUpper.includes('ENHANCED')) return 3;
+    if (labelUpper.includes('MDT') || labelUpper.includes('MODERATE')) return 4;
+    if (labelUpper.includes('HIGH')) return 5;
+    
+    return 0;
   };
   const getSpcPercent = (label) => {
     if (typeof label !== 'string' || !label) return 0;
@@ -497,7 +513,7 @@ function AppContent() {
       var thiscolor = "#ff2121";
       var thisTextColor = "#ffffff";
 
-      thiscolor = alertcolor(alert.product.event);
+      thiscolor = alert.properties.color || alertcolor(alert.product.event);
       thisTextColor = getContrastYIQ(thiscolor);
 
       var formattedDate = "";
@@ -693,7 +709,7 @@ function AppContent() {
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                     <View>
                       <Text style={[styles.header, { color: getContrastYIQ(data.forecasts.spc[0].color), fontSize: 18 }]}>Severe Outlook</Text>
-                      <Text style={[styles.text, { color: getContrastYIQ(data.forecasts.spc[0].color) }]}>{data.forecasts.spc[0].description} ({getSpcIndex(data.forecasts.spc[0].label)}/5)</Text>
+                      <Text style={[styles.text, { color: getContrastYIQ(data.forecasts.spc[0].color) }]}>{data.forecasts.spc[0].description} ({getSpcIndex(data.forecasts.spc[0].level)}/5)</Text>
                     </View>
                   </View>
                   <View style={{ width: 60, height: 60, justifyContent: 'center', alignItems: 'center' }}>
@@ -716,13 +732,13 @@ function AppContent() {
                         fill="none"
                         strokeLinecap="round"
                         strokeDasharray={`${2 * Math.PI * 26} ${2 * Math.PI * 26}`}
-                        strokeDashoffset={(1 - getSpcPercent(data.forecasts.spc[0].label)) * 2 * Math.PI * 26}
+                        strokeDashoffset={(1 - getSpcPercent(data.forecasts.spc[0].level)) * 2 * Math.PI * 26}
                         rotation={-90}
                         origin="30,30"
                       />
                     </Svg>
                     <View style={{ position: 'absolute', justifyContent: 'center', alignItems: 'center' }}>
-                      <Text style={[styles.header, { color: getContrastYIQ(data.forecasts.spc[0].color), fontSize: 18, fontWeight: 'bold' }]}>{getSpcIndex(data.forecasts.spc[0].label)}</Text>
+                      <Text style={[styles.header, { color: getContrastYIQ(data.forecasts.spc[0].color), fontSize: 18, fontWeight: 'bold' }]}>{getSpcIndex(data.forecasts.spc[0].level)}</Text>
                     </View>
                   </View>
                 </View>

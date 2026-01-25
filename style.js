@@ -97,6 +97,10 @@ function wxicons(id) {
     // Charactes are strange and appear ambiguous.
     // This function maps icon IDs to characters.
     return {
+        "day-cold": '',
+        "night-cold": '',
+        "day-hot": '',
+        "night-hot": '',
         "day-clear": '',
         "day-sunny": '',
         "night-clear": '',
@@ -125,6 +129,8 @@ function wxicons(id) {
 function getIconColor (icon) {
     if (icon === undefined || icon === null) return '#ffcc00';
     const lower = icon.toString().toLowerCase();
+    if (lower.includes('cold')) return '#2189ffff';
+    if (lower.includes('hot')) return '#ff4500ff';
     if (lower.includes('partly')) return '#c59e00ff';
     if (lower.includes('clear') || lower.includes('sunny') || lower.includes('fair')) return '#ffcc00';
     if (lower.includes('cloud') || lower.includes('overcast')) return '#888888';
