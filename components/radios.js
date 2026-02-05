@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, BackHandler, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, BackHandler, ActivityIndicator, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -16,6 +16,7 @@ export default function RadiosScreen({ onBack, coordinates }) {
   const [selectedRadio, setSelectedRadio] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const player = useAudioPlayer();
+  const slideAnim = useRef(new Animated.Value(150)).current;
 
   useEffect(() => {
     const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -34,6 +35,23 @@ export default function RadiosScreen({ onBack, coordinates }) {
       }
     };
   }, [onBack]);
+
+  useEffect(() => {
+    if (selectedRadio) {
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        useNativeDriver: true,
+        tension: 50,
+        friction: 8,
+      }).start();
+    } else {
+      Animated.timing(slideAnim, {
+        toValue: 150,
+        duration: 250,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [selectedRadio]);
 
   const playRadio = async (radio) => {
     try {
@@ -62,20 +80,6 @@ export default function RadiosScreen({ onBack, coordinates }) {
         visibilityTime: 3000,
       });
       setIsLoading(false);
-    }
-  };
-
-  const togglePlayPause = () => {
-    if (!selectedRadio || !player) return;
-
-    try {
-      if (player.playing) {
-        player.pause();
-      } else {
-        player.play();
-      }
-    } catch (error) {
-      console.log('Error toggling play/pause:', error);
     }
   };
 
@@ -146,24 +150,37 @@ export default function RadiosScreen({ onBack, coordinates }) {
                 alignItems: 'flex-start', 
                 flexDirection: 'row', 
                 justifyContent: 'space-between',
-                backgroundColor: selectedRadio?.key === radio.key ? theme.cardBackgroundAlt || theme.cardBackground : theme.cardBackground,
-                borderWidth: selectedRadio?.key === radio.key ? 2 : 0,
-                borderColor: selectedRadio?.key === radio.key ? theme.iconColor : 'transparent',
+                backgroundColor: theme.cardBackground,
+                borderBottomWidth: index === sortedRadios.length - 1 ? 0 : 1,
+                borderBottomColor: theme.borderColor,
+                paddingHorizontal: 20,
+                paddingVertical: 15,
+                marginHorizontal: 10,
+                marginBottom: 0,
+                marginTop: 0,
+                borderRadius: 0,
+                borderTopLeftRadius: index === 0 ? 20 : 0,
+                borderTopRightRadius: index === 0 ? 20 : 0,
+                borderBottomLeftRadius: index === sortedRadios.length - 1 ? 20 : 0,
+                borderBottomRightRadius: index === sortedRadios.length - 1 ? 20 : 0,
               }
             ]}>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.header, { fontSize: 18 }]}>{radio.call}</Text>
-                <Text style={styles.text}>{radio.loc}</Text>
+              <View style={{ alignItems: 'flex-start', justifyContent: 'center' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 5 }}>
+                  <MaterialIcons 
+                    name={selectedRadio?.key === radio.key && player.playing ? "equalizer" : "radio"} 
+                    size={24} 
+                    color={theme.iconColor} 
+                    style={{ marginRight: 5 }}
+                  />
+                  <Text style={[styles.header, { fontSize: 18 }]}>{radio.call}</Text>
+                </View>
                 <Text style={[styles.text, { fontSize: 12, opacity: 0.7 }]}>{radio.freq}</Text>
               </View>
-              <View style={{ alignItems: 'flex-end', justifyContent: 'center' }}>
-                <MaterialIcons 
-                  name={selectedRadio?.key === radio.key && player.playing ? "volume-up" : "radio"} 
-                  size={24} 
-                  color={theme.iconColor} 
-                />
-                <Text style={[styles.text, { fontSize: 12, marginTop: 4 }]}>
-                  {(radio.distance * 69).toFixed(0)} mi
+              <View style={{ flex: 1 , alignItems: 'flex-end', justifyContent: 'center', flexDirection: 'column' }}>
+                <Text style={styles.text}>{radio.loc}</Text>
+                <Text style={[styles.text, { fontSize: 12, opacity: 0.7 }]}>
+                  {(radio.distance * 69).toFixed(0)} mi away
                 </Text>
               </View>
             </View>
@@ -171,13 +188,15 @@ export default function RadiosScreen({ onBack, coordinates }) {
         ))}
       </ScrollView>
 
-      {selectedRadio && (
-        <View style={{
+      {(selectedRadio || true) && (
+        <Animated.View style={{
           position: 'absolute',
-          bottom: 10,
-          left: 10,
-          right: 10,
-          borderRadius: 50,
+          bottom: -5,
+          left: 0,
+          right: 0,
+          borderRadius: 0,
+          borderTopColor: theme.iconColor,
+          borderTopWidth: 1,
           backgroundColor: theme.cardBackground,
           borderTopColor: theme.iconColor,
           paddingHorizontal: 20,
@@ -185,10 +204,20 @@ export default function RadiosScreen({ onBack, coordinates }) {
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-between',
+          paddingBottom: 30,
+          transform: [{ translateY: slideAnim }],
+          pointerEvents: selectedRadio ? 'auto' : 'none',
         }}>
+          <MaterialIcons 
+            name="cell-tower"
+            size={30} 
+            color={theme.iconColor} 
+            style={{ marginRight: 15 }}
+          />
+
           <View style={{ flex: 1, marginRight: 15 }}>
-            <Text style={[styles.header, { fontSize: 16 }]}>{selectedRadio.call}</Text>
-            <Text style={[styles.text, { fontSize: 12 }]}>{selectedRadio.loc}</Text>
+            <Text style={[styles.header, { fontSize: 16 }]}>{selectedRadio?.call}</Text>
+            <Text style={[styles.text, { fontSize: 12 }]}>{selectedRadio?.loc}</Text>
           </View>
           
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -196,20 +225,13 @@ export default function RadiosScreen({ onBack, coordinates }) {
               <ActivityIndicator size="large" color={theme.iconColor} style={{ marginHorizontal: 10 }} />
             ) : (
               <>
-                <TouchableOpacity onPress={togglePlayPause} style={{ marginHorizontal: 10 }}>
-                  <MaterialIcons 
-                    name={player.playing ? "pause-circle-filled" : "play-circle-filled"} 
-                    size={50} 
-                    color={theme.iconColor} 
-                  />
-                </TouchableOpacity>
                 <TouchableOpacity onPress={() => { stopAudio(); }}>
-                  <MaterialIcons name="close" size={30} color={theme.iconColor} />
+                  <MaterialIcons name="stop-circle" size={50} color={theme.iconColor} />
                 </TouchableOpacity>
               </>
             )}
           </View>
-        </View>
+        </Animated.View>
       )}
       <Toast />
 

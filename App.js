@@ -60,6 +60,7 @@ function AppContent() {
   const [locationOpen, setLocationOpen] = useState(false);
   const [currentScreen, setCurrentScreen] = useState('home');
   const [data, setData] = useState({});
+  const [status, setStatus] = useState({});
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [lastRefreshTime, setLastRefreshTime] = useState(0);
@@ -312,7 +313,8 @@ function AppContent() {
         console.log('Weather data parsed in', elapsed, 'ms');
         console.log('Data keys:', Object.keys(apiData));
         
-        setData(convertData(apiData.data));
+        setData(convertData(apiData.data || {}));
+        setStatus(apiData.status || {});
         clearTimeout(loadingTimeout);
         setLoading(false);
         setRefreshing(false);
@@ -687,6 +689,21 @@ function AppContent() {
               />
             }
           >
+            {status?.owm != "OK" && <View style={[styles.cardContainer, (open || locationOpen) && { pointerEvents: 'none' }, { paddingHorizontal: 20, textAlign: 'center', backgroundColor: '#cc0000' }]}>
+              <Text style={styles.text}>OpenWeatherMap did not return data. Some or all of the information will be missing. Refresh to retry.</Text>
+            </View>}
+
+            {status?.mcd != "CACHED" && <View style={[styles.cardContainer, (open || locationOpen) && { pointerEvents: 'none' }, { paddingHorizontal: 20, textAlign: 'center', backgroundColor: '#cc0000' }]}>
+              <Text style={styles.text}>Mesoscale discussions are temporarily unavailable.</Text>
+            </View>}
+
+            {(status?.spc?.day1 != "CACHED" || status?.spc?.day2 != "CACHED" || status?.spc?.day3 != "CACHED") && <View style={[styles.cardContainer, (open || locationOpen) && { pointerEvents: 'none' }, { paddingHorizontal: 20, textAlign: 'center', backgroundColor: '#cc0000' }]}>
+              <Text style={styles.text}>Some or all SPC thunderstorm outlooks are temporarily unavailable.</Text>
+            </View>}
+
+            {(status?.alerts != "OK" && status?.alerts != "NOT FETCHED") && <View style={[styles.cardContainer, (open || locationOpen) && { pointerEvents: 'none' }, { paddingHorizontal: 20, textAlign: 'center', backgroundColor: '#cc0000' }]}>
+              <Text style={styles.text}>Alerts did not fetch successfully.</Text>
+            </View>}
 
             <View style={[styles.cardContainer, (open || locationOpen) && { pointerEvents: 'none' }, { paddingHorizontal: 60, flexDirection: 'row', alignItems: 'center' }]}>
               <Text style={[styles.wxicons, { color: getIconColor(data.current?.condition?.condition || data.current?.condition) }]}>{getIcon(data.current?.condition?.condition || null, getDayOrNight())}</Text>
