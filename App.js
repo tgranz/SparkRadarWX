@@ -252,10 +252,8 @@ function AppContent() {
     if (converted.forecasts?.daily && Array.isArray(converted.forecasts.daily)) {
       converted.forecasts.daily = converted.forecasts.daily.map(day => ({
         ...day,
-        // Daily highs/lows came in Kelvin but were derived from Fahrenheit without the +32 step;
-        // subtracting 32 after the Kelvin→F conversion restores the original Fahrenheit value.
-        high: convertTemperature(kelvinToFahrenheit(day.high) - 32, tempUnit),
-        low: convertTemperature(kelvinToFahrenheit(day.low) - 32, tempUnit),
+        high: convertTemperature(kelvinToFahrenheit(day.high), tempUnit),
+        low: convertTemperature(kelvinToFahrenheit(day.low), tempUnit),
         wind_speed: convertSpeed(mpsToMph(day.wind_speed), speedUnit),
       }));
     }
