@@ -1,8 +1,9 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Dimensions, Animated, TextInput, ScrollView, Alert } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import * as Location from 'expo-location';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../theme';
 const { width, height } = Dimensions.get('window');
 
@@ -14,8 +15,10 @@ export default function Sidebar({ onClose, onLocationSelect }) {
     const [searchResults, setSearchResults] = React.useState([]);
     const [isSearching, setIsSearching] = React.useState(false);
     const [gettingLocation, setGettingLocation] = React.useState(false);
+    const [favorites, setFavorites] = useState([]);
 
     useEffect(() => {
+        loadFavorites();
         Animated.parallel([
             Animated.timing(slideAnim, {
                 toValue: 0,
@@ -29,6 +32,42 @@ export default function Sidebar({ onClose, onLocationSelect }) {
             }),
         ]).start();
     }, []);
+
+    const loadFavorites = async () => {
+        try {
+            const savedFavorites = await AsyncStorage.getItem('favoriteLocations');
+            if (savedFavorites) {
+                setFavorites(JSON.parse(savedFavorites));
+            }
+        } catch (error) {
+            console.error('Error loading favorites:', error);
+        }
+    };
+
+    const saveFavorites = async (newFavorites) => {
+        try {
+            await AsyncStorage.setItem('favoriteLocations', JSON.stringify(newFavorites));
+            setFavorites(newFavorites);
+        } catch (error) {
+            console.error('Error saving favorites:', error);
+        }
+    };
+
+    const addFavorite = (location) => {
+        const newFavorite = {
+            name: location.name || location,
+            lat: location.lat,
+            lon: location.lon,
+            id: Date.now().toString(),
+        };
+        const updated = [...favorites, newFavorite];
+        saveFavorites(updated);
+    };
+
+    const removeFavorite = (id) => {
+        const updated = favorites.filter(fav => fav.id !== id);
+        saveFavorites(updated);
+    };
 
     const handleClose = () => {
         Animated.parallel([
@@ -91,6 +130,10 @@ export default function Sidebar({ onClose, onLocationSelect }) {
         console.log('Selected location:', location);
         if (onLocationSelect) {
             onLocationSelect(location.lat, location.lon, location.name);
+        }
+        // Add to favorites if not already there
+        if (!favorites.some(fav => fav.lat === location.lat && fav.lon === location.lon)) {
+            addFavorite(location);
         }
         handleClose();
     };
@@ -192,6 +235,26 @@ export default function Sidebar({ onClose, onLocationSelect }) {
                     </View>
 
                     <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+
+                        <View style={styles.section}>                            
+                            <TouchableOpacity 
+                                style={[styles.locationItem, { borderBottomColor: theme.borderColor }]}
+                                onPress={handleCurrentLocation}
+                                disabled={gettingLocation}
+                            >
+                                <MaterialIcons name="my-location" size={24} color={theme.weatherIconPrimary} style={styles.locationIcon} />
+                                <View style={styles.locationInfo}>
+                                    <Text style={[styles.locationName, { color: theme.primaryText }]}>
+                                        {gettingLocation ? 'Getting location...' : 'Use Current Location'}
+                                    </Text>
+                                    <Text style={[styles.locationDetails, { color: theme.secondaryText }]}>
+                                        {gettingLocation ? 'Please wait' : 'Using location services'}
+                                    </Text>
+                                </View>
+                                <MaterialIcons name="chevron-right" size={24} color={theme.secondaryText} />
+                            </TouchableOpacity>
+                        </View>
+
                         {isSearching && searchResults.length === 0 && searchQuery.length > 0 ? (
                             <View style={styles.section}>
                                 <Text style={[styles.sectionTitle, { color: theme.primaryText }]}>Search Results</Text>
@@ -224,70 +287,34 @@ export default function Sidebar({ onClose, onLocationSelect }) {
                             </View>
                         ) : (
                             <>
-                                <View style={styles.section}>
-                                    <Text style={[styles.sectionTitle, { color: theme.primaryText }]}>Favorites</Text>
-                            
-                                    <TouchableOpacity style={[styles.locationItem, { borderBottomColor: theme.borderColor }]}>
-                                        <MaterialIcons name="location-on" size={24} color={theme.weatherIconPrimary} style={styles.locationIcon} />
-                                        <View style={styles.locationInfo}>
-                                            <Text style={[styles.locationName, { color: theme.primaryText }]}>New York, NY</Text>
-                                            <Text style={[styles.locationDetails, { color: theme.secondaryText }]}>KJFK</Text>
+                                {favorites.length > 0 && (
+                                    <View style={styles.section}>
+                                        <View style={{ flexDirection: 'row', alignItems: 'center', textAlign: 'center', marginBottom: 12 }}>
+                                            <MaterialIcons name="star" size={24} color="#FFD700" style={{ marginRight: 8 }} />
+                                            <Text style={[styles.sectionTitle, { color: theme.primaryText, marginBottom: 0 }]}>Favorites</Text>
                                         </View>
-                                        <MaterialIcons name="star" size={24} color="#FFD700" />
-                                    </TouchableOpacity>
+                                        {favorites.map((favorite) => (
+                                            <View key={favorite.id} style={[styles.locationItem, { borderBottomColor: theme.borderColor }]}>
+                                                <TouchableOpacity 
+                                                    style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}
+                                                    onPress={() => handleLocationSelect(favorite)}
+                                                >
+                                                    <MaterialIcons name="location-on" size={24} color={theme.weatherIconPrimary} style={styles.locationIcon} />
+                                                    <View style={styles.locationInfo}>
+                                                        <Text style={[styles.locationName, { color: theme.primaryText }]}>{favorite.name}</Text>
+                                                        <Text style={[styles.locationDetails, { color: theme.secondaryText }]}>
+                                                            {favorite.lat.toFixed(4)}, {favorite.lon.toFixed(4)}
+                                                        </Text>
+                                                    </View>
+                                                </TouchableOpacity>
+                                                <TouchableOpacity onPress={() => removeFavorite(favorite.id)}>
+                                                    <MaterialIcons name="delete" size={24} color="#CC0000" />
+                                                </TouchableOpacity>
+                                            </View>
+                                        ))}
+                                    </View>
+                                )}
 
-                                    <TouchableOpacity style={[styles.locationItem, { borderBottomColor: theme.borderColor }]}>
-                                        <MaterialIcons name="location-on" size={24} color={theme.weatherIconPrimary} style={styles.locationIcon} />
-                                        <View style={styles.locationInfo}>
-                                            <Text style={[styles.locationName, { color: theme.primaryText }]}>Los Angeles, CA</Text>
-                                            <Text style={[styles.locationDetails, { color: theme.secondaryText }]}>KLAX</Text>
-                                        </View>
-                                        <MaterialIcons name="star" size={24} color="#FFD700" />
-                                    </TouchableOpacity>
-
-                                    <TouchableOpacity style={[styles.locationItem, { borderBottomColor: theme.borderColor }]}>
-                                        <MaterialIcons name="location-on" size={24} color={theme.weatherIconPrimary} style={styles.locationIcon} />
-                                        <View style={styles.locationInfo}>
-                                            <Text style={[styles.locationName, { color: theme.primaryText }]}>Chicago, IL</Text>
-                                            <Text style={[styles.locationDetails, { color: theme.secondaryText }]}>O'Hare International Airport</Text>
-                                        </View>
-                                        <MaterialIcons name="star" size={24} color="#FFD700" />
-                                    </TouchableOpacity>
-                                </View>
-
-                                <View style={styles.section}>
-                                    <Text style={[styles.sectionTitle, { color: theme.primaryText }]}>Current Location</Text>
-                            
-                                    <TouchableOpacity 
-                                        style={[styles.locationItem, { borderBottomColor: theme.borderColor }]}
-                                        onPress={handleCurrentLocation}
-                                        disabled={gettingLocation}
-                                    >
-                                        <MaterialIcons name="my-location" size={24} color={theme.weatherIconPrimary} style={styles.locationIcon} />
-                                        <View style={styles.locationInfo}>
-                                            <Text style={[styles.locationName, { color: theme.primaryText }]}>
-                                                {gettingLocation ? 'Getting location...' : 'Use Current Location'}
-                                            </Text>
-                                            <Text style={[styles.locationDetails, { color: theme.secondaryText }]}>
-                                                {gettingLocation ? 'Please wait' : 'Using location services'}
-                                            </Text>
-                                        </View>
-                                        <MaterialIcons name="chevron-right" size={24} color={theme.secondaryText} />
-                                    </TouchableOpacity>
-                                </View>
-
-                                <View style={styles.section}>
-                                    <Text style={[styles.sectionTitle, { color: theme.primaryText }]}>Recents</Text>
-
-                                    <TouchableOpacity style={[styles.locationItem, { borderBottomColor: theme.borderColor }]}>
-                                        <MaterialIcons name="location-on" size={24} color={theme.weatherIconPrimary} style={styles.locationIcon} />
-                                        <View style={styles.locationInfo}>
-                                            <Text style={[styles.locationName, { color: theme.primaryText }]}>Fort Wayne, IN</Text>
-                                            <Text style={[styles.locationDetails, { color: theme.secondaryText }]}>KFWA</Text>
-                                        </View>
-                                        <MaterialIcons name="chevron-right" size={24} color={theme.secondaryText} />
-                                    </TouchableOpacity>
-                                </View>
                             </>
                         )}
                     </ScrollView>

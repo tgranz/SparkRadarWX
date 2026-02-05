@@ -70,6 +70,8 @@ function AppContent() {
   const [locationName, setLocationName] = useState("Current Location");
   const hasLoadedData = useRef(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [favorites, setFavorites] = useState([]);
+  const [isCurrentLocationFavorited, setIsCurrentLocationFavorited] = useState(false);
 
   // Unit preferences
   const [tempUnit, setTempUnit] = useState('fahrenheit');
@@ -102,6 +104,69 @@ function AppContent() {
     }
   };
 
+  // Load favorites
+  const loadFavorites = async () => {
+    try {
+      const savedFavorites = await AsyncStorage.getItem('favoriteLocations');
+      if (savedFavorites) {
+        setFavorites(JSON.parse(savedFavorites));
+      }
+    } catch (error) {
+      console.error('Error loading favorites:', error);
+    }
+  };
+
+  // Toggle favorite for current location
+  const toggleCurrentLocationFavorite = async () => {
+    if (!coordinates.lat || !coordinates.lon) return;
+
+    const isFavorited = favorites.some(
+      fav => fav.lat === coordinates.lat && fav.lon === coordinates.lon
+    );
+
+    if (isFavorited) {
+      // Remove from favorites
+      const updated = favorites.filter(
+        fav => !(fav.lat === coordinates.lat && fav.lon === coordinates.lon)
+      );
+      await AsyncStorage.setItem('favoriteLocations', JSON.stringify(updated));
+      setFavorites(updated);
+      setIsCurrentLocationFavorited(false);
+      Toast.show({
+        type: 'info',
+        text1: 'Removed from favorites',
+        position: 'bottom',
+        visibilityTime: 2000,
+      });
+    } else {
+      // Add to favorites
+      const newFavorite = {
+        name: locationName,
+        lat: coordinates.lat,
+        lon: coordinates.lon,
+        id: Date.now().toString(),
+      };
+      const updated = [...favorites, newFavorite];
+      await AsyncStorage.setItem('favoriteLocations', JSON.stringify(updated));
+      setFavorites(updated);
+      setIsCurrentLocationFavorited(true);
+      Toast.show({
+        type: 'success',
+        text1: 'Added to favorites',
+        position: 'bottom',
+        visibilityTime: 2000,
+      });
+    }
+  };
+
+  // Check if current location is favorited
+  const checkIfCurrentLocationFavorited = () => {
+    if (!coordinates.lat || !coordinates.lon) return;
+    const isFavorited = favorites.some(
+      fav => fav.lat === coordinates.lat && fav.lon === coordinates.lon
+    );
+    setIsCurrentLocationFavorited(isFavorited);
+  };
 
   // Unit conversion functions
   const convertTemperature = (tempF, unit) => {
@@ -438,8 +503,9 @@ function AppContent() {
       }
     })();
 
-    // Load unit preferences on app start
+    // Load unit preferences and favorites on app start
     loadUnitPreferences();
+    loadFavorites();
   }, []);
 
 
@@ -448,7 +514,8 @@ function AppContent() {
       loadCurrentConditions(coordinates.lat, coordinates.lon);
       hasLoadedData.current = true;
     }
-  }, [coordinates]);
+    checkIfCurrentLocationFavorited();
+  }, [coordinates, favorites]);
 
   // Re-convert data when unit preferences change
   useEffect(() => {
@@ -670,8 +737,8 @@ function AppContent() {
             </TouchableOpacity>
 
             <View style={styles.side}>
-              <TouchableOpacity>
-                <MaterialIcons name="star" size={35} color={theme.iconColor} />
+              <TouchableOpacity onPress={toggleCurrentLocationFavorite}>
+                <MaterialIcons name={isCurrentLocationFavorited ? "star" : "star-outline"} size={35} color={isCurrentLocationFavorited ? "#FFD700" : theme.iconColor} />
               </TouchableOpacity>
             </View>
           </View>
