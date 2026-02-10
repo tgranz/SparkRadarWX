@@ -44,30 +44,6 @@ export default function Sidebar({ onClose, onLocationSelect }) {
         }
     };
 
-    const saveFavorites = async (newFavorites) => {
-        try {
-            await AsyncStorage.setItem('favoriteLocations', JSON.stringify(newFavorites));
-            setFavorites(newFavorites);
-        } catch (error) {
-            console.error('Error saving favorites:', error);
-        }
-    };
-
-    const addFavorite = (location) => {
-        const newFavorite = {
-            name: location.name || location,
-            lat: location.lat,
-            lon: location.lon,
-            id: Date.now().toString(),
-        };
-        const updated = [...favorites, newFavorite];
-        saveFavorites(updated);
-    };
-
-    const removeFavorite = (id) => {
-        const updated = favorites.filter(fav => fav.id !== id);
-        saveFavorites(updated);
-    };
 
     const handleClose = () => {
         Animated.parallel([
@@ -130,10 +106,6 @@ export default function Sidebar({ onClose, onLocationSelect }) {
         console.log('Selected location:', location);
         if (onLocationSelect) {
             onLocationSelect(location.lat, location.lon, location.name);
-        }
-        // Add to favorites if not already there
-        if (!favorites.some(fav => fav.lat === location.lat && fav.lon === location.lon)) {
-            addFavorite(location);
         }
         handleClose();
     };
@@ -307,8 +279,8 @@ export default function Sidebar({ onClose, onLocationSelect }) {
                                                         </Text>
                                                     </View>
                                                 </TouchableOpacity>
-                                                <TouchableOpacity onPress={() => removeFavorite(favorite.id)}>
-                                                    <MaterialIcons name="delete" size={24} color="#CC0000" />
+                                                <TouchableOpacity onPress={() => {}}>
+                                                    <MaterialIcons name="more-vert" size={24} color={theme.secondaryText} />
                                                 </TouchableOpacity>
                                             </View>
                                         ))}
@@ -380,7 +352,7 @@ const styles = StyleSheet.create({
     searchContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        borderRadius: 12,
+        borderRadius: 40,
         paddingHorizontal: 12,
         marginBottom: 20,
     },
@@ -410,7 +382,7 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
     },
     locationIcon: {
-        marginRight: 12,
+        marginRight: 15,
     },
     locationInfo: {
         flex: 1,

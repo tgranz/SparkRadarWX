@@ -195,7 +195,6 @@ export default function RadiosScreen({ onBack, coordinates }) {
           left: 0,
           right: 0,
           borderRadius: 0,
-          borderTopColor: theme.iconColor,
           borderTopWidth: 1,
           backgroundColor: theme.cardBackground,
           borderTopColor: theme.iconColor,

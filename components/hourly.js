@@ -117,7 +117,16 @@ export default function HourlyScreen({ onMenuOpen, onBack, data }) {
                 showsVerticalScrollIndicator={false}
             >
                 {hourlyData.map((hour, index) => (
-                    <View key={index} style={[localStyles.hourCard, { backgroundColor: theme.cardBackground }]}>
+                    <View key={index} style={[localStyles.hourCard, {
+                        backgroundColor: theme.cardBackground,
+                        borderTopEndRadius: index == 0 ? 20 : 0,
+                        borderBottomEndRadius: index == hourlyData.length - 1 ? 20 : 0,
+                        borderTopStartRadius: index == 0 ? 20 : 0,
+                        borderBottomStartRadius: index == hourlyData.length - 1 ? 20 : 0,
+                        borderBottomColor: theme.iconColor,
+                        borderBottomWidth: index === hourlyData.length - 1 ? 0 : 1,
+                        marginBottom: index === hourlyData.length - 1 ? 20 : 0,
+                    }]}>
                         <View style={localStyles.timeSection}>
                             <Text style={[localStyles.timeText, { color: theme.primaryText }]}>{hour.day}</Text>
                             <Text style={[localStyles.timeText, { color: theme.primaryText }]}>{hour.time}</Text>
@@ -147,10 +156,8 @@ export default function HourlyScreen({ onMenuOpen, onBack, data }) {
 
 const localStyles = StyleSheet.create({
     hourCard: {
-        borderRadius: 20,
         padding: 15,
         marginHorizontal: 20,
-        marginBottom: 10,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',

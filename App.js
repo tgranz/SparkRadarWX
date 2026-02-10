@@ -411,8 +411,14 @@ function AppContent() {
 
   // Helper function to determine if current time is day or night
   const getDayOrNight = () => {
-    const parseTime = (timeStr) => {
+    const parseTimeToMinutes = (timeStr) => {
       if (!timeStr) return null;
+
+      const isoDate = new Date(timeStr);
+      if (!Number.isNaN(isoDate.getTime())) {
+        return isoDate.getHours() * 60 + isoDate.getMinutes();
+      }
+
       const match = timeStr.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
       if (!match) return null;
       let hours = parseInt(match[1], 10);
@@ -423,8 +429,8 @@ function AppContent() {
       return hours * 60 + minutes;
     };
 
-    const sunriseMinutes = parseTime(data.sunrise);
-    const sunsetMinutes = parseTime(data.sunset);
+    const sunriseMinutes = parseTimeToMinutes(data.location?.sunrise || data.sunrise);
+    const sunsetMinutes = parseTimeToMinutes(data.location?.sunset || data.sunset);
 
     if (sunriseMinutes == null || sunsetMinutes == null) return 'day';
 

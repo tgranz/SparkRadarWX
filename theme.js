@@ -45,7 +45,7 @@ export const darkTheme = {
   headerText: '#FFFFFF',
   
   // UI element colors
-  iconColor: '#FFFFFF',
+  iconColor: '#CCCCCC',
   borderColor: '#444444',
   searchBackground: '#3a3a3a',
   shadowColor: '#000000',
