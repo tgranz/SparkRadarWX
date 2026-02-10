@@ -1,7 +1,7 @@
 # About
 ### SparkRadarWX is a free, open source, beautiful weather app for android, built with Expo and React Native and integrated with SparkRadar.
 
-> This project is a WIP. When a release is available, it will be listed under the GitHub releases section.
+> This project is still in BETA and may contain bugs.
 
 > Note: Staring in preview v0.1.10, SparkRadarWX now uses the backend at [SparkRadarWXAPI OneCall](https://github.com/tgranz/sparkradarwxapi)
 
