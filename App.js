@@ -1029,7 +1029,7 @@ function AppContent() {
                 activeOpacity={0.8}
               >
                 <WebView
-                  source={{ uri: `https://sparkradar.app?mode=preview&zoom=7&lat=${coordinates.lat}&lon=${coordinates.lon}` }}
+                  source={{ uri: `https://lite.sparkradar.app?mode=preview&zoom=7&lat=${coordinates.lat}&lon=${coordinates.lon}` }}
                   style={{ flex: 1 }}
                   pointerEvents="none"
                   scrollEnabled={false}
