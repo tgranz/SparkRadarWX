@@ -14,6 +14,7 @@ export default function SettingsScreen({ onBack }) {
   const [pressureUnit, setPressureUnit] = useState('inches');
   const [distanceUnit, setDistanceUnit] = useState('miles');
   const [speedUnit, setSpeedUnit] = useState('mph');
+  const [radarMode, setRadarMode] = useState('lite');
   const [activeDropdown, setActiveDropdown] = useState(null); // tracks which setting's modal is open
 
   // Load settings on mount
@@ -27,6 +28,7 @@ export default function SettingsScreen({ onBack }) {
       const savedPressureUnit = await AsyncStorage.getItem('pressureUnit');
       const savedDistanceUnit = await AsyncStorage.getItem('distanceUnit');
       const savedSpeedUnit = await AsyncStorage.getItem('speedUnit');
+      const savedRadarMode = await AsyncStorage.getItem('radarMode');
 
       if (savedPressureUnit !== null) {
         setPressureUnit(savedPressureUnit);
@@ -39,6 +41,9 @@ export default function SettingsScreen({ onBack }) {
       }
       if (savedTempUnit !== null) {
         setTempUnit(savedTempUnit);
+      }
+      if (savedRadarMode !== null) {
+        setRadarMode(savedRadarMode);
       }
     } catch (error) {
       console.error('Error loading settings:', error);
@@ -85,6 +90,16 @@ export default function SettingsScreen({ onBack }) {
     }
   };
 
+  const saveRadarMode = async (mode) => {
+    try {
+      await AsyncStorage.setItem('radarMode', mode);
+      setRadarMode(mode);
+      setActiveDropdown(null);
+    } catch (error) {
+      console.error('Error saving settings:', error);
+    }
+  };
+
   const dropdownOptions = {
     temperature: [
       { label: 'Fahrenheit (°F)', value: 'fahrenheit' },
@@ -103,6 +118,10 @@ export default function SettingsScreen({ onBack }) {
       { label: 'Miles per hour (mph)', value: 'mph' },
       { label: 'Kilometers per hour (km/h)', value: 'kph' },
     ],
+    radar: [
+      { label: 'SparkRadar Lite', value: 'lite' },
+      { label: 'SparkRadar', value: 'regular' },
+    ],
   };
 
   const currentValues = {
@@ -110,6 +129,7 @@ export default function SettingsScreen({ onBack }) {
     pressure: pressureUnit,
     distance: distanceUnit,
     speed: speedUnit,
+    radar: radarMode,
   };
 
   const saveHandlers = {
@@ -117,6 +137,7 @@ export default function SettingsScreen({ onBack }) {
     pressure: savePressureUnit,
     distance: saveDistanceUnit,
     speed: saveSpeedUnit,
+    radar: saveRadarMode,
   };
 
   useEffect(() => {
@@ -262,6 +283,27 @@ export default function SettingsScreen({ onBack }) {
           >
             <Text style={styles.text}>
               {speedUnit === 'mph' ? 'Miles per hour (mph)' : 'Kilometers per hour (km/h)'}
+            </Text>
+            <MaterialIcons name="arrow-drop-down" size={24} color={theme.iconColor} />
+          </TouchableOpacity>
+        </View>
+
+        <Text style={[styles.text, { margin: 15, fontSize: 18, fontWeight: 'bold' }]}>Radar</Text>
+        <View style={[styles.card, styles.settingItem, { backgroundColor: theme.cardBackground, borderTopLeftRadius: 20, borderTopRightRadius:20, borderBottomLeftRadius: 20, borderBottomRightRadius: 20, }]}> 
+          <Text style={styles.text}>Radar Version</Text>
+          <TouchableOpacity 
+            onPress={() => setActiveDropdown('radar')}
+            style={{ 
+              flexDirection: 'row', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              padding: 10,
+              backgroundColor: '#00000000',
+              borderRadius: 50,
+            }}
+          >
+            <Text style={styles.text}>
+              {radarMode === 'lite' ? 'SparkRadar Lite' : 'SparkRadar'}
             </Text>
             <MaterialIcons name="arrow-drop-down" size={24} color={theme.iconColor} />
           </TouchableOpacity>
